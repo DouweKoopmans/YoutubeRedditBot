@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO" shutdownHook="disable">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%highlight{%d{HH:mm:ss.SSS} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
+        </Console>
+        <File name="file" fileName="log/app_${date:yyyy-MM-dd}.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %c{1} [%t] %-5level - %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="Console" level="DEBUG"/>
+            <AppenderRef ref="file" level="DEBUG"/>
+        </Root>
+    </Loggers>
+</Configuration>
