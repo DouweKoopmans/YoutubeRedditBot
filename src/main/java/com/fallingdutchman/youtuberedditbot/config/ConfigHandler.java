@@ -7,8 +7,6 @@ import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -18,10 +16,9 @@ import java.util.List;
  * Created by Douwe Koopmans on 8-1-16.
  */
 public class ConfigHandler {
-    private static final Logger log = LoggerFactory.getLogger(ConfigHandler.class);
     private static ConfigHandler ourInstance = new ConfigHandler();
 
-    private Config conf = ConfigFactory.parseFile(new File("../application.conf"));
+    private Config conf = ConfigFactory.parseFile(new File("application.conf"));
 
     private List<Instance> entries = Lists.newArrayList();
     private RedditCredentials redditCredentials;
