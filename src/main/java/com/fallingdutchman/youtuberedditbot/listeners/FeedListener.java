@@ -195,9 +195,9 @@ public final class FeedListener implements IFeedListener{
 
     private AbstractPoller createPoller() {
         switch (configInstance.getType()){
-            case "newVideoListener":
-                return new DescriptionListenerPoller(this);
             case "descriptionListener":
+                return new DescriptionListenerPoller(this);
+            case "newVideoListener":
             default:
                 return new DefaultNewVideoPoller(this);
         }
