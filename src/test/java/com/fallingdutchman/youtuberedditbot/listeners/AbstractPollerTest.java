@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
  * Created by Douwe Koopmans on 22-1-16.
  */
 public class AbstractPollerTest {
-    AbstractPoller poller;
+    private AbstractPoller poller;
 
     @Before
     public void setUp() throws Exception {
@@ -29,7 +29,8 @@ public class AbstractPollerTest {
                 "fake",
                 "fake",
                 "fake",
-                Lists.asList("fake", new String[0])
+                Lists.asList("fake", new String[0]),
+                false
         ), authenticator);
 
         poller = new AbstractPoller(listener) {

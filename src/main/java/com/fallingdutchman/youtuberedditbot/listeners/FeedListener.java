@@ -5,7 +5,6 @@ import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
 import com.fallingdutchman.youtuberedditbot.config.model.Instance;
 import com.fallingdutchman.youtuberedditbot.feedregister.FeedRegister;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -13,6 +12,7 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import net.dean.jraw.models.Submission;
 import org.jdom2.Content;
 import org.jdom2.Element;
 import org.slf4j.Logger;
@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Timer;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,16 +34,19 @@ import java.util.stream.Collectors;
 /**
  * Created by Douwe Koopmans on 8-1-16.
  */
-// TODO: 8-1-16 add some log messages to this
 public final class FeedListener implements IFeedListener{
+    // TODO: 29-9-16 read this from a file
+    private static final String DESCRIPTION_FORMAT = "#Description\n\n----\n\n%s\n----\n\ni'm a Bot, " +
+            "[Source Code](https://github.com/DouweKoopmans/YoutubeRedditBot)";
+
     private static final Logger log = LoggerFactory.getLogger(FeedListener.class);
     private final String channelId;
-    @VisibleForTesting
-    final RedditManager authenticator;
+    private final RedditManager authenticator;
     private LocalDateTime latestVideo = LocalDateTime.now();
     private final Instance configInstance;
     private SyndFeed feed;
     private Timer timer;
+
     private final AbstractPoller poller;
 
     private FeedListener(RedditManager authenticator, Instance configInstance)
@@ -77,13 +81,13 @@ public final class FeedListener implements IFeedListener{
      * @param description the original description
      * @return the generated string
      */
-    public static String generateMdDescription(String description) {
-        return "#Description:\n" + description.replace("\n", "  \n");
+    public static String generateComment(final String description) {
+        return String.format(DESCRIPTION_FORMAT, description);
     }
 
     @Override
     public final void listen() {
-        log.info("starting up new listener for " + this.channelId);
+        log.info("starting up new listener for " + this.getChannelId());
         timer = new Timer();
 
         try {
@@ -157,12 +161,12 @@ public final class FeedListener implements IFeedListener{
                 .collect(Collectors.toList());
 
         final Optional<String> des = mediaElements.stream()
-                .filter(element -> element.getName().equalsIgnoreCase("group"))
+                .filter(element -> "group".equalsIgnoreCase(element.getName()))
                 .map(Element::getContent)
                 .flatMap(Collection::stream)
                 .filter(content -> content.getCType().equals(Content.CType.Element))
                 .map(content -> (Element) content)
-                .filter(element -> element.getName().equalsIgnoreCase("description"))
+                .filter(element -> "description".equalsIgnoreCase(element.getName()))
                 .map(Element::getContent)
                 .flatMap(Collection::stream)
                 .map(Content::getValue)
@@ -172,24 +176,48 @@ public final class FeedListener implements IFeedListener{
             description = des.get();
         }
 
-        return new YoutubeVideo(videoTitle, videoId, url, description, publishDate, this.channelId);
+        return new YoutubeVideo(videoTitle, videoId, url, description, publishDate, this.getChannelId());
     }
 
-    protected void newVideoPosted(YoutubeVideo video) {
+    void newVideoPosted(YoutubeVideo video) {
         log.info("found a new video, " + video.toString());
         this.setLatestVideo(video.getPublishDate());
 
 //        new Thread(() -> getConfigInstance().getSubreddits()
-//                .forEach(subreddit -> getPoller().processNewVideo(video, subreddit))).start();
+//                .forEach(processVideo(video)));
     }
 
-    // TODO: 5-2-2016 remove throw declaration in favor of a local try-catch chain to reduce duplicate code
-    protected void updateFeed() throws IOException, FeedException {
+    private Consumer<String> processVideo(YoutubeVideo video) {
+        return subreddit -> {
+            final Optional<Submission> submission
+                    = this.authenticator.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
+
+            if (submission.isPresent() && configInstance.shouldPostDescription()) {
+                this.authenticator.submitComment(generateComment(video.getDescription()), submission.get());
+            }
+        };
+    }
+
+    protected boolean updateFeed() {
         synchronized (FeedListener.class) {
-            SyndFeedInput input = new SyndFeedInput();
-            XmlReader reader = new XmlReader(new URL(configInstance.getYoutubeFeed()));
-            this.feed = input.build(reader);
-            reader.close();
+            try (XmlReader reader = new XmlReader(new URL(configInstance.getYoutubeFeed()))) {
+                SyndFeedInput input = new SyndFeedInput();
+                this.feed = input.build(reader);
+
+                log.trace("updated feed of %s", getChannelId());
+            } catch (FeedException e) {
+                log.error("was unable to parse feed", e);
+                return false;
+            } catch (MalformedURLException e) {
+                log.error(String.format("youtube feed URL is malformed, please check the configurations " +
+                        "for channel-id %s", getChannelId()), e);
+                return false;
+            } catch (IOException e) {
+                log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
+                return false;
+            }
+
+            return true;
         }
     }
 

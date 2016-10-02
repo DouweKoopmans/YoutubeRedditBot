@@ -3,20 +3,20 @@ package com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw;
 import com.fallingdutchman.youtuberedditbot.config.model.RedditCredentials;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.collect.Maps;
+import net.dean.jraw.ApiException;
 import net.dean.jraw.RedditClient;
-import net.dean.jraw.http.HttpRequest;
 import net.dean.jraw.http.NetworkException;
-import net.dean.jraw.http.RestResponse;
 import net.dean.jraw.http.UserAgent;
 import net.dean.jraw.http.oauth.Credentials;
+import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthException;
+import net.dean.jraw.managers.AccountManager;
+import net.dean.jraw.models.Submission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * stores a {@link Credentials} object and a {@link RedditClient} for an instance. used to authenticate an user and
@@ -27,19 +27,20 @@ import java.util.Map;
 public class RedditManager {
     private static final Logger log = LoggerFactory.getLogger(RedditManager.class);
 
-
     private final RedditClient reddit;
 
     /**
      * whether the {@link #authenticate(RedditCredentials)} method should execute, set to false for testing purposes
      */
     public boolean shouldAuth = true;
+    private final AccountManager accountManager;
 
     /**
      * standard constructor
      */
     public RedditManager(String username) {
-        reddit = new RedditClient(UserAgent.of("desktop", "com.fallingdutchman.YoutubeRedditBot", "1.0", username));
+        reddit = new RedditClient(UserAgent.of("desktop", "com.fallingdutchman.youtuberedditbot", "1.0", username));
+        accountManager = new AccountManager(reddit);
     }
 
     /**
@@ -56,7 +57,8 @@ public class RedditManager {
                 redditCredentials.getRedditOauthSecret());
 
         try {
-            reddit.authenticate(reddit.getOAuthHelper().easyAuth(credentials));
+            final OAuthData authData = reddit.getOAuthHelper().easyAuth(credentials);
+            reddit.authenticate(authData); // TODO: 30-9-16 is throwing a 500 inernal server error
         } catch (OAuthException e) {
             log.error("an OAuth exception occurred whilst trying authenticate "
                     + redditCredentials.getRedditUserName(), e);
@@ -69,60 +71,38 @@ public class RedditManager {
     /**
      * submit a link post
      */
-    public RestResponse submitPost(String title, String url, String subreddit) {
-        Map<String, String> postArgs = Maps.newLinkedHashMap();
-        postArgs.put("title", title);
-        postArgs.put("url", url);
-        postArgs.put("sr", subreddit);
-        postArgs.put("kind", "link");
-        postArgs.put("uh", reddit.me().data("modhash"));
-
-        HttpRequest httpRequest = null;
+    public Optional<Submission> submitPost(String title, URL url, String subreddit) {
         try {
-            httpRequest = HttpRequest.Builder
-                    .from("POST", new URL("http://www.reddit.com/api/submit"))
-                    .post(postArgs)
-                    .build();
+            final Submission submission = accountManager.submit(new AccountManager.SubmissionBuilder(url, subreddit, title)
+                    .resubmit(false)
+                    .sendRepliesToInbox(false));
+            log.info("submitted url to /r/%s, submission id: %s", submission.getSubredditName(), submission.getId());
 
-        } catch (MalformedURLException ignored) {
+            return Optional.of(submission);
+        } catch (ApiException e) {
+            log.error(String.format("an API exception occurred whilst trying to submit a post to /r/%s " +
+                    "with the title %s and url %s", subreddit, title, url), e);
+            return Optional.empty();
         }
-
-        return reddit.execute(httpRequest);
     }
 
     /**
      * submit a comment
      * @param text markdown text for the comment
-     * @param parentFullname fullname of the parent thing this comment needs to point to (https://www.reddit.com/dev/api#fullnames)
-     * @return the response
+     * @param submission submission object we want to reply to
+     * @return the id of the comment
      */
-    public RestResponse submitComment(String text,String parentFullname) {
-        Map<String, String> postArgs = Maps.newLinkedHashMap();
-        postArgs.put("api_type", "json");
-        postArgs.put("text", text);
-        postArgs.put("thing_id", parentFullname);
-        postArgs.put("uh", reddit.me().data("modhash"));
-
-        HttpRequest httpRequest = null;
+    public Optional<String> submitComment(String text,Submission submission) {
         try {
-            httpRequest = HttpRequest.Builder
-                    .from("POST", new URL("https://www.reddit.com/api/comment"))
-                    .post(postArgs)
-                    .build();
-        } catch (MalformedURLException ignored) {
+            final String commentId = accountManager.reply(submission, text);
+            log.info("posted comment to %s on /r/%s, with id %s", submission.getId(), submission.getSubredditName(),
+                    commentId);
+
+            return Optional.of(commentId);
+        } catch (ApiException e) {
+            log.error("was unable to post comment", e);
+            return Optional.empty();
         }
-
-        return reddit.execute(httpRequest);
-    }
-
-    /**
-     * send a request to reddit, used to make sure requests are send in sequence
-     * @param client the reddit client of a logged in user
-     * @param request the request to be send
-     * @return the response message from the server
-     */
-    public static synchronized RestResponse makeRequest(RedditClient client, HttpRequest request) {
-        return client.execute(request);
     }
 
     @Override

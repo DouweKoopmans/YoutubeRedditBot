@@ -19,12 +19,13 @@ public class YoutubeRedditBot {
     private static FeedRegister feedRegister = FeedRegister.getInstance();
 
     // TODO: 12-1-16 add dry-run
+    // TODO: 29-9-16 provide password and username through command-line, not config file 
     public static void main(String[] args) {
         try {
             new YoutubeRedditBot().run();
         } catch (Exception e) {
             log.error("an unexpected error occurred whilst executing the application. will now exit the application." +
-                    " the stacktract", e);
+                    " the stacktrace", e);
         }
     }
 

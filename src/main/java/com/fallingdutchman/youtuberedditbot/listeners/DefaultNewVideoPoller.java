@@ -1,10 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.rometools.rome.feed.synd.SyndEntry;
-import net.dean.jraw.http.RestResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,26 +32,5 @@ public class DefaultNewVideoPoller extends AbstractPoller {
             log.trace(video.toString());
             this.listener.newVideoPosted(video);
         }
-    }
-
-    @Override
-    public void processNewVideo(YoutubeVideo video, String subreddit) {
-        final RestResponse submitPostResponse = listener.authenticator.submitPost(video.getVideoTitle(),
-                video.getUrl().toExternalForm(), subreddit);
-
-        // TODO: 20-9-16 don't use hidden API's
-        final JsonElement jsonResponse = new JsonParser().parse(submitPostResponse.getJson().asText());
-        String url = jsonResponse.getAsJsonArray()
-                .get(18).getAsJsonArray()
-                .get(3).getAsJsonArray()
-                .get(0)
-                .getAsString();
-
-        String cleanedUpUrl = url.replace("http://www.reddit.com/r/" + subreddit + "/comments/", "");
-        cleanedUpUrl = cleanedUpUrl.replace(video.getVideoTitle().replace(" ", "_"), "");
-        cleanedUpUrl = cleanedUpUrl.replaceAll("/", "");
-
-        listener.authenticator.submitComment(FeedListener.generateMdDescription(video.getDescription()), "t3_"
-                + cleanedUpUrl);
     }
 }

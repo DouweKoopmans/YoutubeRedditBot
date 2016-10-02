@@ -6,8 +6,6 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -15,20 +13,15 @@ import java.util.List;
  */
 public class Instance {
     private final Logger log = LoggerFactory.getLogger(Instance.class);
-    @Nullable
     private final String youtubeName;
-    @Nonnull
     private final String type;
-    @Nonnull
     private final String youtubeFeed;
-    @Nonnull
     private final List<String> subreddits;
-    @Nullable
     private final String descriptionRegex;
+    private final boolean postDescription;
 
-    public Instance(@Nonnull String type, @Nonnull String youtubeFeed,
-                    @Nullable String descriptionRegex, @Nullable String youtubeName,
-                    @Nonnull List<String> subreddits) {
+    public Instance(String type, String youtubeFeed, String descriptionRegex, String youtubeName,
+                    List<String> subreddits, boolean postDescription) {
 
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(youtubeFeed);
@@ -39,31 +32,31 @@ public class Instance {
         this.descriptionRegex = descriptionRegex;
         this.youtubeName = youtubeName;
         this.subreddits = subreddits;
+        this.postDescription = postDescription;
     }
 
-    @Nonnull
     public String getYoutubeFeed() {
         return youtubeFeed;
     }
 
-    @Nullable
     public String getDescriptionRegex() {
         return descriptionRegex;
     }
 
-    @Nonnull
     public List<String> getSubreddits() {
         return subreddits;
     }
 
-    @Nonnull
     public String getType() {
         return type;
     }
 
-    @Nullable
     public String getYoutubeName() {
         return youtubeName;
+    }
+
+    public boolean shouldPostDescription() {
+        return postDescription;
     }
 
     public void print() {
