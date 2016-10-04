@@ -1,5 +1,6 @@
-package com.fallingdutchman.youtuberedditbot.listeners;
+package com.fallingdutchman.youtuberedditbot.polling;
 
+import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
@@ -24,8 +25,7 @@ public class AbstractPollerTest {
     public void setUp() throws Exception {
         RedditManager authenticator = new RedditManager("fake");
         authenticator.shouldAuth = false;
-        FeedListener listener = FeedListener.of(ConfigHandler.getInstance().createInstance(
-                "fake",
+        YoutubeFeedListener listener = YoutubeFeedListener.of(ConfigHandler.getInstance().createInstance(
                 "fake",
                 "fake",
                 "fake",

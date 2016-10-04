@@ -1,9 +1,7 @@
 package com.fallingdutchman.youtuberedditbot;
 
-import com.fallingdutchman.youtuberedditbot.listeners.FeedListener;
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
-import com.fallingdutchman.youtuberedditbot.config.model.Instance;
-import com.fallingdutchman.youtuberedditbot.feedregister.FeedRegister;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.rometools.rome.io.FeedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +56,7 @@ public class YoutubeRedditBot {
         for (Instance instance : entries) {
             // add a register a feed listener for every entry
             try {
-                feedRegister.add(FeedListener.of(instance,
+                feedRegister.add(YoutubeFeedListener.of(instance,
                         ConfigHandler.getInstance().getRedditCredentials().getRedditUserName()));
             } catch (IOException e) {
                 log.error("was unable to read stream from URL, please make sure the youtubeFeed " +

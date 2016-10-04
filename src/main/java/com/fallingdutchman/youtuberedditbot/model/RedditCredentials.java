@@ -1,4 +1,4 @@
-package com.fallingdutchman.youtuberedditbot.config.model;
+package com.fallingdutchman.youtuberedditbot.model;
 
 /**
  * Created by douwe on 20-9-16.

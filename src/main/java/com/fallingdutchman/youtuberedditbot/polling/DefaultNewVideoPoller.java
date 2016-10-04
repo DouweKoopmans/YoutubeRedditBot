@@ -1,5 +1,6 @@
-package com.fallingdutchman.youtuberedditbot.listeners;
+package com.fallingdutchman.youtuberedditbot.polling;
 
+import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
 import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.rometools.rome.feed.synd.SyndEntry;
 import org.slf4j.Logger;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultNewVideoPoller extends AbstractPoller {
     private static final Logger log = LoggerFactory.getLogger(DefaultNewVideoPoller.class);
 
-    public DefaultNewVideoPoller(FeedListener listener) {
+    public DefaultNewVideoPoller(YoutubeFeedListener listener) {
         super(listener);
     }
 

@@ -1,5 +1,6 @@
-package com.fallingdutchman.youtuberedditbot.listeners;
+package com.fallingdutchman.youtuberedditbot.polling;
 
+import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -15,9 +16,9 @@ import java.util.TimerTask;
  */
 public abstract class AbstractPoller extends TimerTask{
     private static final Logger log = LoggerFactory.getLogger(AbstractPoller.class);
-    protected final FeedListener listener;
+    protected final YoutubeFeedListener listener;
 
-    protected AbstractPoller(FeedListener listener) {
+    protected AbstractPoller(YoutubeFeedListener listener) {
         this.listener = listener;
     }
 

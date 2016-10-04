@@ -1,5 +1,5 @@
 group 'com.fallingdutchman'
-version '1.0-SNAPSHOT'
+version 'beta-1'
 
 apply plugin: 'application'
 
@@ -12,6 +12,10 @@ def slf4j_version = '1.7.13'
 repositories {
     mavenCentral()
     jcenter()
+}
+
+run {
+    workingDir = "run"
 }
 
 dependencies {
@@ -28,6 +32,7 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: '2.5'
     compile group: 'net.dean.jraw', name: 'JRAW', version: '0.9.0'
     compile group: 'org.javatuples', name: 'javatuples', version: '1.2'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
 }
 
 distTar {

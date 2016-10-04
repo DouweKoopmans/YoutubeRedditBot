@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.config;
 
-import com.fallingdutchman.youtuberedditbot.config.model.Instance;
-import com.fallingdutchman.youtuberedditbot.config.model.RedditCredentials;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
@@ -45,7 +45,6 @@ public class ConfigHandler {
 
             String type;
             String youtubeFeed;
-            String descriptionRegex = null;
             String youtubeName = null;
             List<String> subreddits;
             boolean postDescription;
@@ -57,21 +56,17 @@ public class ConfigHandler {
 
             if ("descriptionListener".equals(type)) {
                 youtubeName = instance.getString("youtubeName");
-
-
-            } else if ("newVideoListener".equals(type)) {
-                descriptionRegex = instance.getString("descriptionRegex");
             }
 
-            getEntries().add(createInstance(type, youtubeFeed, descriptionRegex, youtubeName, subreddits,
+            getEntries().add(createInstance(type, youtubeFeed, youtubeName, subreddits,
                     postDescription));
         }
     }
 
     @VisibleForTesting
-    public Instance createInstance(String type, String youtubeFeed, String descriptionRegex, String youtubeName,
+    public Instance createInstance(String type, String youtubeFeed, String youtubeName,
                                    List<String> subreddits, boolean postDescription) {
-        return new Instance(type, youtubeFeed, descriptionRegex, youtubeName, subreddits, postDescription);
+        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription);
     }
 
     public List<Instance> getEntries() {

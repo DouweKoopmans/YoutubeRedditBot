@@ -1,6 +1,5 @@
-package com.fallingdutchman.youtuberedditbot.feedregister;
+package com.fallingdutchman.youtuberedditbot;
 
-import com.fallingdutchman.youtuberedditbot.listeners.IFeedListener;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;

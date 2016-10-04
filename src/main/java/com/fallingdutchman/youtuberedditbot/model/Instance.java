@@ -1,4 +1,4 @@
-package com.fallingdutchman.youtuberedditbot.config.model;
+package com.fallingdutchman.youtuberedditbot.model;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -17,10 +17,10 @@ public class Instance {
     private final String type;
     private final String youtubeFeed;
     private final List<String> subreddits;
-    private final String descriptionRegex;
+
     private final boolean postDescription;
 
-    public Instance(String type, String youtubeFeed, String descriptionRegex, String youtubeName,
+    public Instance(String type, String youtubeFeed, String youtubeName,
                     List<String> subreddits, boolean postDescription) {
 
         Preconditions.checkNotNull(type);
@@ -29,7 +29,6 @@ public class Instance {
         Preconditions.checkArgument(!subreddits.isEmpty());
         this.type = type;
         this.youtubeFeed = youtubeFeed;
-        this.descriptionRegex = descriptionRegex;
         this.youtubeName = youtubeName;
         this.subreddits = subreddits;
         this.postDescription = postDescription;
@@ -37,10 +36,6 @@ public class Instance {
 
     public String getYoutubeFeed() {
         return youtubeFeed;
-    }
-
-    public String getDescriptionRegex() {
-        return descriptionRegex;
     }
 
     public List<String> getSubreddits() {
@@ -63,7 +58,6 @@ public class Instance {
         log.info("Type: " + getType());
         log.info("Subreddits: " + getSubreddits());
         log.info("YoutubeFeed: " + getYoutubeFeed());
-        log.info("DescriptionRegex: " + getDescriptionRegex());
         log.info("YoutubeName: " + getYoutubeName());
     }
 
@@ -77,13 +71,12 @@ public class Instance {
         }
         Instance instance = (Instance) o;
         return Objects.equal(getYoutubeFeed(), instance.getYoutubeFeed()) &&
-                Objects.equal(getDescriptionRegex(), instance.getDescriptionRegex()) &&
                 Objects.equal(getSubreddits(), instance.getSubreddits());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getYoutubeFeed(), getDescriptionRegex(), getSubreddits());
+        return Objects.hashCode(getYoutubeFeed(), getSubreddits());
     }
 
     @Override
@@ -92,7 +85,6 @@ public class Instance {
                 .add("type", type)
                 .add("subreddits", subreddits)
                 .add("youtubeFeed", youtubeFeed)
-                .add("descriptionRegex", descriptionRegex)
                 .add("youtubeName", youtubeName)
                 .toString();
     }

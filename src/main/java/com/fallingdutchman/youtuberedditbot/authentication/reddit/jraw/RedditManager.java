@@ -1,6 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw;
 
-import com.fallingdutchman.youtuberedditbot.config.model.RedditCredentials;
+import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import net.dean.jraw.ApiException;
@@ -73,7 +73,7 @@ public class RedditManager {
      */
     public Optional<Submission> submitPost(String title, URL url, String subreddit) {
         try {
-            final Submission submission = accountManager.submit(new AccountManager.SubmissionBuilder(url, subreddit, title)
+            final Submission submission = submitPost(new AccountManager.SubmissionBuilder(url, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
             log.info("submitted url to /r/%s, submission id: %s", submission.getSubredditName(), submission.getId());
@@ -84,6 +84,25 @@ public class RedditManager {
                     "with the title %s and url %s", subreddit, title, url), e);
             return Optional.empty();
         }
+    }
+
+    public Optional<Submission> submitSelfPost(String title, String text, String subreddit){
+        try {
+            final Submission submission = submitPost(new AccountManager.SubmissionBuilder(text, subreddit, title)
+                    .resubmit(false)
+                    .sendRepliesToInbox(false));
+            log.info("submitted self post to /r/%s, submission id: %s", submission.getSubredditName(), submission.getId());
+
+            return Optional.of(submission);
+        } catch (ApiException e) {
+            log.error(String.format("an API exception occurred whilst trying to submit a post to /r/%s " +
+                    "with the title %s and url %s", subreddit, title, text), e);
+            return Optional.empty();
+        }
+    }
+
+    private Submission submitPost(AccountManager.SubmissionBuilder submissionBuilder) throws ApiException {
+        return accountManager.submit(submissionBuilder);
     }
 
     /**

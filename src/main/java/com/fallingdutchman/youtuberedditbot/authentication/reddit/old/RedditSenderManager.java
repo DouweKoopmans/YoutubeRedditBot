@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.authentication.reddit.old;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
-import com.fallingdutchman.youtuberedditbot.config.model.RedditCredentials;
+import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import net.dean.jraw.http.NetworkException;
