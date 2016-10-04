@@ -1,14 +1,13 @@
 package com.fallingdutchman.youtuberedditbot.config;
 
-import com.fallingdutchman.youtuberedditbot.config.model.Instance;
-import com.fallingdutchman.youtuberedditbot.config.model.RedditCredentials;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.List;
 
@@ -46,31 +45,28 @@ public class ConfigHandler {
 
             String type;
             String youtubeFeed;
-            String descriptionRegex = null;
             String youtubeName = null;
             List<String> subreddits;
+            boolean postDescription;
 
             type = instance.getString("type");
             youtubeFeed = instance.getString("youtubeFeed");
             subreddits = instance.getStringList("subreddit");
+            postDescription = instance.getBoolean("postDescription");
 
             if ("descriptionListener".equals(type)) {
                 youtubeName = instance.getString("youtubeName");
-
-
-            } else if ("newVideoListener".equals(type)) {
-                descriptionRegex = instance.getString("descriptionRegex");
             }
 
-            getEntries().add(createInstance(type, youtubeFeed, descriptionRegex, youtubeName, subreddits));
+            getEntries().add(createInstance(type, youtubeFeed, youtubeName, subreddits,
+                    postDescription));
         }
     }
 
     @VisibleForTesting
-    @Nonnull
-    public Instance createInstance(String type, String youtubeFeed, String descriptionRegex, String youtubeName,
-                                   List<String> subreddits) {
-        return new Instance(type, youtubeFeed, descriptionRegex, youtubeName, subreddits);
+    public Instance createInstance(String type, String youtubeFeed, String youtubeName,
+                                   List<String> subreddits, boolean postDescription) {
+        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription);
     }
 
     public List<Instance> getEntries() {

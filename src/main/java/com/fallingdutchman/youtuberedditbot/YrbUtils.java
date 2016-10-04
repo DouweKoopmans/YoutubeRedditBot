@@ -7,7 +7,7 @@ import java.util.Date;
 /**
  * Created by Douwe Koopmans on 22-1-16.
  */
-public class YrbUtils {
+public final class YrbUtils {
     private YrbUtils(){}
 
     // TESTME: 22-1-16

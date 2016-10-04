@@ -1,18 +1,21 @@
-package com.fallingdutchman.youtuberedditbot.listeners;
+package com.fallingdutchman.youtuberedditbot;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
-import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
-import com.fallingdutchman.youtuberedditbot.config.model.Instance;
-import com.fallingdutchman.youtuberedditbot.feedregister.FeedRegister;
-import com.google.common.annotations.VisibleForTesting;
+import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.polling.AbstractPoller;
+import com.fallingdutchman.youtuberedditbot.polling.DefaultNewVideoPoller;
+import com.fallingdutchman.youtuberedditbot.polling.DescriptionListenerPoller;
+import com.fallingdutchman.youtuberedditbot.processing.YoutubeProcessor;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import net.dean.jraw.models.Submission;
 import org.jdom2.Content;
 import org.jdom2.Element;
 import org.slf4j.Logger;
@@ -26,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Timer;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,26 +37,28 @@ import java.util.stream.Collectors;
 /**
  * Created by Douwe Koopmans on 8-1-16.
  */
-// TODO: 8-1-16 add some log messages to this
-public final class FeedListener implements IFeedListener{
-    private static final Logger log = LoggerFactory.getLogger(FeedListener.class);
+public final class YoutubeFeedListener implements IFeedListener{
+    private static final Logger log = LoggerFactory.getLogger(YoutubeFeedListener.class);
     private final String channelId;
-    @VisibleForTesting
-    final RedditManager authenticator;
+    private final RedditManager authenticator;
     private LocalDateTime latestVideo = LocalDateTime.now();
-    private final Instance configInstance;
+    private final Instance instance;
     private SyndFeed feed;
     private Timer timer;
+
     private final AbstractPoller poller;
 
-    private FeedListener(RedditManager authenticator, Instance configInstance)
+    private YoutubeFeedListener(RedditManager authenticator, Instance instance)
             throws IOException, FeedException {
+        Preconditions.checkNotNull(authenticator);
+        Preconditions.checkNotNull(instance);
+
         this.authenticator = authenticator;
-        this.configInstance = configInstance;
+        this.instance = instance;
 
-//        authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials());
+        authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials());
 
-        String feedUrl = configInstance.getYoutubeFeed();
+        String feedUrl = instance.getYoutubeFeed();
         Matcher matcher = Pattern.compile(".*channel_id=([\\w\\-]*)").matcher(feedUrl);
         if (matcher.find()) {
             this.channelId = matcher.group(1);
@@ -63,27 +69,18 @@ public final class FeedListener implements IFeedListener{
         poller = createPoller();
     }
 
-    public static FeedListener of(Instance instance, String username) throws IOException, FeedException {
-        return new FeedListener(new RedditManager(username), instance);
+    public static YoutubeFeedListener of(Instance instance, String username) throws IOException, FeedException {
+        return new YoutubeFeedListener(new RedditManager(username), instance);
     }
 
-    public static FeedListener of(Instance instance, RedditManager authenticator)
+    public static YoutubeFeedListener of(Instance instance, RedditManager authenticator)
             throws IOException, FeedException{
-        return new FeedListener(authenticator, instance);
-    }
-
-    /**
-     * generate a string with markdown for the description to be posted to reddit
-     * @param description the original description
-     * @return the generated string
-     */
-    public static String generateMdDescription(String description) {
-        return "#Description:\n" + description.replace("\n", "  \n");
+        return new YoutubeFeedListener(authenticator, instance);
     }
 
     @Override
     public final void listen() {
-        log.info("starting up new listener for " + this.channelId);
+        log.info("starting up new listener for " + this.getChannelId());
         timer = new Timer();
 
         try {
@@ -111,15 +108,15 @@ public final class FeedListener implements IFeedListener{
         return poller;
     }
 
-    protected Instance getConfigInstance() {
-        return configInstance;
+    public Instance getInstance() {
+        return instance;
     }
 
-    protected SyndFeed getFeed(){
+    public SyndFeed getFeed(){
         return feed;
     }
 
-    protected LocalDateTime getLatestVideo() {
+    public LocalDateTime getLatestVideo() {
         return latestVideo;
     }
 
@@ -130,7 +127,7 @@ public final class FeedListener implements IFeedListener{
                 + " to: " + date );
     }
 
-    protected YoutubeVideo find(SyndEntry entry) {
+    public YoutubeVideo find(SyndEntry entry) {
         URL url = null;
         try {
             url = new URL(entry.getLink());
@@ -157,12 +154,12 @@ public final class FeedListener implements IFeedListener{
                 .collect(Collectors.toList());
 
         final Optional<String> des = mediaElements.stream()
-                .filter(element -> element.getName().equalsIgnoreCase("group"))
+                .filter(element -> "group".equalsIgnoreCase(element.getName()))
                 .map(Element::getContent)
                 .flatMap(Collection::stream)
                 .filter(content -> content.getCType().equals(Content.CType.Element))
                 .map(content -> (Element) content)
-                .filter(element -> element.getName().equalsIgnoreCase("description"))
+                .filter(element -> "description".equalsIgnoreCase(element.getName()))
                 .map(Element::getContent)
                 .flatMap(Collection::stream)
                 .map(Content::getValue)
@@ -172,29 +169,52 @@ public final class FeedListener implements IFeedListener{
             description = des.get();
         }
 
-        return new YoutubeVideo(videoTitle, videoId, url, description, publishDate, this.channelId);
+        return new YoutubeVideo(videoTitle, videoId, url, description, publishDate, this.getChannelId());
     }
 
-    protected void newVideoPosted(YoutubeVideo video) {
+    public void newVideoPosted(YoutubeVideo video) {
         log.info("found a new video, " + video.toString());
         this.setLatestVideo(video.getPublishDate());
+        final YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
 
-//        new Thread(() -> getConfigInstance().getSubreddits()
-//                .forEach(subreddit -> getPoller().processNewVideo(video, subreddit))).start();
+        new Thread(() -> getInstance().getSubreddits().forEach(processVideo(processor))).start();
     }
 
-    // TODO: 5-2-2016 remove throw declaration in favor of a local try-catch chain to reduce duplicate code
-    protected void updateFeed() throws IOException, FeedException {
-        synchronized (FeedListener.class) {
-            SyndFeedInput input = new SyndFeedInput();
-            XmlReader reader = new XmlReader(new URL(configInstance.getYoutubeFeed()));
-            this.feed = input.build(reader);
-            reader.close();
+    private Consumer<String> processVideo(YoutubeProcessor processor) {
+        return subreddit -> {
+            final Optional<Submission> submission = processor.postVideo(subreddit, false);
+
+            if (submission.isPresent() && instance.shouldPostDescription()) {
+                processor.postComment(submission.get(), "description");
+            }
+        };
+    }
+
+    public boolean updateFeed() {
+        synchronized (YoutubeFeedListener.class) {
+            try (XmlReader reader = new XmlReader(new URL(instance.getYoutubeFeed()))) {
+                SyndFeedInput input = new SyndFeedInput();
+                this.feed = input.build(reader);
+
+                log.trace("updated feed of %s", getChannelId());
+            } catch (FeedException e) {
+                log.error("was unable to parse feed", e);
+                return false;
+            } catch (MalformedURLException e) {
+                log.error(String.format("youtube feed URL is malformed, please check the configurations " +
+                        "for channel-id %s", getChannelId()), e);
+                return false;
+            } catch (IOException e) {
+                log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
+                return false;
+            }
+
+            return true;
         }
     }
 
     private AbstractPoller createPoller() {
-        switch (configInstance.getType()){
+        switch (instance.getType()){
             case "descriptionListener":
                 return new DescriptionListenerPoller(this);
             case "newVideoListener":
@@ -208,7 +228,7 @@ public final class FeedListener implements IFeedListener{
         return MoreObjects.toStringHelper(this)
                 .add("channelId", channelId)
                 .add("latestVideo", latestVideo)
-                .add("configInstance", configInstance)
+                .add("instance", instance)
                 .toString();
     }
 
@@ -217,26 +237,26 @@ public final class FeedListener implements IFeedListener{
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FeedListener)) {
+        if (!(o instanceof YoutubeFeedListener)) {
             return false;
         }
-        FeedListener that = (FeedListener) o;
+        YoutubeFeedListener that = (YoutubeFeedListener) o;
         return Objects.equal(getChannelId(), that.getChannelId()) &&
                 Objects.equal(timer, that.timer) &&
                 Objects.equal(getLatestVideo(), that.getLatestVideo()) &&
-                Objects.equal(configInstance, that.configInstance) &&
+                Objects.equal(instance, that.instance) &&
                 Objects.equal(getFeed(), that.getFeed());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getChannelId(), timer, getLatestVideo(), configInstance, getFeed());
+        return Objects.hashCode(getChannelId(), timer, getLatestVideo(), instance, getFeed());
     }
 
     @Override
     public void print() {
         log.info("ChannelId:  " + getChannelId());
         log.info("LatestVideo: " + getLatestVideo());
-        getConfigInstance().print();
+        getInstance().print();
     }
 }

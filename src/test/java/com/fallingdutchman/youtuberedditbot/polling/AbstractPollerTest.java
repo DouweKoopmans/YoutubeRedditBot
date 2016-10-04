@@ -1,5 +1,6 @@
-package com.fallingdutchman.youtuberedditbot.listeners;
+package com.fallingdutchman.youtuberedditbot.polling;
 
+import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
@@ -18,18 +19,18 @@ import static org.junit.Assert.assertEquals;
  * Created by Douwe Koopmans on 22-1-16.
  */
 public class AbstractPollerTest {
-    AbstractPoller poller;
+    private AbstractPoller poller;
 
     @Before
     public void setUp() throws Exception {
         RedditManager authenticator = new RedditManager("fake");
         authenticator.shouldAuth = false;
-        FeedListener listener = FeedListener.of(ConfigHandler.getInstance().createInstance(
+        YoutubeFeedListener listener = YoutubeFeedListener.of(ConfigHandler.getInstance().createInstance(
                 "fake",
                 "fake",
                 "fake",
-                "fake",
-                Lists.asList("fake", new String[0])
+                Lists.asList("fake", new String[0]),
+                false
         ), authenticator);
 
         poller = new AbstractPoller(listener) {

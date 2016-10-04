@@ -1,7 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Java template
 *.class
-application.conf
+run/application.conf
 !src/main/dist/application.conf
 
 # Mobile Tools for Java (J2ME)
@@ -66,7 +66,7 @@ gradle-app.setting
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio
 *.iml
 
-## Directory-based project format:
+## Directory-based project template:
 .idea/
 # if you remove the above rule, at least ignore the following:
 
@@ -89,7 +89,7 @@ gradle-app.setting
 # Mongo Explorer plugin:
 # .idea/mongoSettings.xml
 
-## File-based project format:
+## File-based project template:
 *.ipr
 *.iws
 
@@ -110,3 +110,4 @@ crashlytics.properties
 crashlytics-build.properties
 
 log/
+run/
