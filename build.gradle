@@ -1,9 +1,11 @@
 group 'com.fallingdutchman'
-version 'beta-1'
+version 'beta2'
 
 apply plugin: 'application'
+apply plugin: 'com.bmuschko.docker-java-application'
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 mainClassName = 'com.fallingdutchman.youtuberedditbot.YoutubeRedditBot'
 
 def log4j_version = '2.5'
@@ -12,6 +14,15 @@ def slf4j_version = '1.7.13'
 repositories {
     mavenCentral()
     jcenter()
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.bmuschko:gradle-docker-plugin:3.0.3'
+    }
 }
 
 run {
@@ -38,4 +49,73 @@ dependencies {
 distTar {
     compression = Compression.GZIP
     extension = 'tar.gz'
+}
+
+ext.priv = parseConfig(file('private.properties'))
+
+// docker shit below
+
+// general configurations
+docker {
+    javaApplication {
+        baseImage = 'java'
+        maintainer = 'Douwe Koopmans'
+        ports = [8080]
+        tag = 'douwekoopmans/youtuberedditbot'
+    }
+
+    registryCredentials {
+        url = 'https://index.docker.io/v1'
+        username = priv.dockerUser
+        password = priv.dockerPass
+        email = priv.dockerEmail
+    }
+    url = 'unix:///var/run/docker.sock'
+}
+
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
+// this is where the docker image will be build from, so this has to include all the config and
+def tempDir = project.file('build/mydocker/')
+
+task copyDockerResources(type: Copy) {
+    dependsOn distTar
+    from { distTar.archivePath }
+
+    into { tempDir }
+}
+
+task createDockerfile(type: Dockerfile) {
+    dependsOn copyDockerResources
+    destFile = new File("$tempDir/Dockerfile")
+
+    from docker.javaApplication.baseImage
+    maintainer docker.javaApplication.maintainer
+    addFile "$distTar.archivePath.name", '/'
+    entryPoint({
+        def installDir = distTar.archiveName - ".$distTar.extension"
+        "/$installDir/bin/$project.applicationName".toString() })
+    exposePort { docker.javaApplication.ports }
+}
+
+task buildImage(type: DockerBuildImage) {
+    dependsOn createDockerfile
+    inputDir = tempDir
+    tag = docker.javaApplication.tag
+}
+
+task pushImage(type: DockerPushImage) {
+    dependsOn buildImage
+    imageName = buildImage.tag
+}
+
+// helper method for parsing .properties files
+static def ConfigObject parseConfig(File config) {
+    config.withReader {
+        def prop = new Properties()
+        prop.load(it)
+        return (new ConfigSlurper().parse(prop))
+    }
 }

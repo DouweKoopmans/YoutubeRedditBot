@@ -17,7 +17,7 @@ import java.util.List;
 public class ConfigHandler {
     private static ConfigHandler ourInstance = new ConfigHandler();
 
-    private Config conf = ConfigFactory.parseFile(new File("application.conf"));
+    private Config conf = ConfigFactory.parseFile(new File("data/application.conf"));
 
     private List<Instance> entries = Lists.newArrayList();
     private RedditCredentials redditCredentials;
@@ -25,7 +25,6 @@ public class ConfigHandler {
     private ConfigHandler() {
     }
 
-    // TODO: 20-9-16 instead of a getInstance use dependency injection 
     public static ConfigHandler getInstance() {
         return ourInstance;
     }
