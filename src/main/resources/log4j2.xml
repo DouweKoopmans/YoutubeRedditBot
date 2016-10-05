@@ -4,7 +4,7 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%highlight{%d{HH:mm:ss.SSS} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
         </Console>
-        <File name="file" fileName="log/app_${date:yyyy-MM-dd}.log">
+        <File name="file" fileName="data/log/app_${date:yyyy-MM-dd}.log">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} %c{1} [%t] %-5level - %msg%n"/>
         </File>
     </Appenders>

@@ -1,8 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Java template
 *.class
-run/application.conf
-!src/main/dist/application.conf
+application.conf
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -111,3 +110,5 @@ crashlytics-build.properties
 
 log/
 run/
+private.properties
+!private.properties.example
