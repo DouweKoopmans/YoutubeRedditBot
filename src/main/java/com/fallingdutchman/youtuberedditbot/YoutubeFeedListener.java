@@ -173,15 +173,16 @@ public final class YoutubeFeedListener implements IFeedListener{
     }
 
     public void newVideoPosted(YoutubeVideo video) {
-        log.info("found a new video, " + video.toString());
+        log.info("found a new video, \n" + video.toString());
         this.setLatestVideo(video.getPublishDate());
         final YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
 
-        new Thread(() -> getInstance().getSubreddits().forEach(processVideo(processor))).start();
+        getInstance().getSubreddits().forEach(processVideo(processor));
     }
 
     private Consumer<String> processVideo(YoutubeProcessor processor) {
         return subreddit -> {
+            log.debug(String.format("attempting to process new video for /r/%s", subreddit) );
             final Optional<Submission> submission = processor.postVideo(subreddit, false);
 
             if (submission.isPresent() && instance.shouldPostDescription()) {
@@ -196,7 +197,7 @@ public final class YoutubeFeedListener implements IFeedListener{
                 SyndFeedInput input = new SyndFeedInput();
                 this.feed = input.build(reader);
 
-                log.trace("updated feed of %s", getChannelId());
+                log.trace(String.format("updated feed of %s", getChannelId()));
             } catch (FeedException e) {
                 log.error("was unable to parse feed", e);
                 return false;
