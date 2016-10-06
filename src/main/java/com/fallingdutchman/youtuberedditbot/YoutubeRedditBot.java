@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class YoutubeRedditBot {
     private static final Logger log = LoggerFactory.getLogger(YoutubeRedditBot.class);
-    private static FeedRegister feedRegister = FeedRegister.getInstance();
+    private static FeedRegister feedRegister = new FeedRegister();
 
     // TODO: 12-1-16 add dry-run
     // TODO: 29-9-16 provide password and username through command-line, not config file 
@@ -53,10 +53,10 @@ public class YoutubeRedditBot {
 
         log.info(String.format("found and initialising %s entries", entries.size()));
 
-        for (Instance instance : entries) {
+        entries.forEach(instance -> {
             // add a register a feed listener for every entry
             try {
-                feedRegister.add(YoutubeFeedListener.of(instance,
+                feedRegister.addEntry(YoutubeFeedListener.of(instance,
                         ConfigHandler.getInstance().getRedditCredentials().getRedditUserName()));
             } catch (IOException e) {
                 log.error("was unable to read stream from URL, please make sure the youtubeFeed " +
@@ -65,9 +65,9 @@ public class YoutubeRedditBot {
                 log.error("was unable to parse feed, please make sure the youtubeFeed attribute" +
                         "in your config is correct", e);
             }
-        }
+        });
 
         // start the listener
-        feedRegister.forEach(feedListener -> feedListener.getValue().listen());
+        feedRegister.getEntries().forEach(IFeedListener::listen);
     }
 }

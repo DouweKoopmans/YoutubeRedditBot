@@ -122,9 +122,7 @@ public final class YoutubeFeedListener implements IFeedListener{
 
     protected void setLatestVideo(LocalDateTime date) {
         this.latestVideo = date;
-
-        log.debug("setting latestVideo Date for ID " + FeedRegister.getInstance().keyOf(this)
-                + " to: " + date );
+        log.debug(String.format("setting latest video date of %s to %s", this, date));
     }
 
     public YoutubeVideo find(SyndEntry entry) {
