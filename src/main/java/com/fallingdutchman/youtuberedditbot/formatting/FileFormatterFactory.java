@@ -1,5 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.formatting;
 
+import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
@@ -15,7 +16,7 @@ import java.util.Locale;
  * Created by douwe on 3-10-16.
  */
 public class FileFormatterFactory implements FormatterFactory{
-    private static final String FORMAT_LOCATION = "formats";
+    private static final String FORMAT_FOLDER = "formats";
     private static final String FORMAT_EXTENTION = "md";
 
     @Override
@@ -38,7 +39,7 @@ public class FileFormatterFactory implements FormatterFactory{
         Preconditions.checkArgument(!name.endsWith("."));
         Preconditions.checkArgument(!name.startsWith("."));
 
-        return "./" + FORMAT_LOCATION + "/" + name.replaceAll("/", "").toLowerCase(Locale.UK) + '.' + FORMAT_EXTENTION;
+        return YrbUtils.LOCAL_HOST_FOLDER + '/' + FORMAT_FOLDER + "/" + name.replaceAll("/", "").toLowerCase(Locale.UK) + '.' + FORMAT_EXTENTION;
     }
 
     static String joinStrings(final List<String> strings) throws IOException{

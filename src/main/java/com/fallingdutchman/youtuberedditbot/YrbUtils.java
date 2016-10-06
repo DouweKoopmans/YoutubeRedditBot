@@ -8,6 +8,8 @@ import java.util.Date;
  * Created by Douwe Koopmans on 22-1-16.
  */
 public final class YrbUtils {
+    public static final String LOCAL_HOST_FOLDER = "/data/";
+
     private YrbUtils(){}
 
     // TESTME: 22-1-16

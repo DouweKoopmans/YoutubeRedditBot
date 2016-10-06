@@ -1,5 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.config;
 
+import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -17,7 +18,7 @@ import java.util.List;
 public class ConfigHandler {
     private static ConfigHandler ourInstance = new ConfigHandler();
 
-    private Config conf = ConfigFactory.parseFile(new File("data/application.conf"));
+    private Config conf = ConfigFactory.parseFile(new File(YrbUtils.LOCAL_HOST_FOLDER + "application.conf"));
 
     private List<Instance> entries = Lists.newArrayList();
     private RedditCredentials redditCredentials;
