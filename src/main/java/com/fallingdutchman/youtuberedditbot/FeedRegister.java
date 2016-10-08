@@ -12,17 +12,17 @@ import java.util.Set;
  */
 public class FeedRegister {
     private static final Logger log = LoggerFactory.getLogger(FeedRegister.class);
-    private final Set<IFeedListener> entries = Sets.newConcurrentHashSet();
+    private final Set<FeedListener> entries = Sets.newConcurrentHashSet();
 
-    public Set<IFeedListener> getEntries() {
+    public Set<FeedListener> getEntries() {
         return ImmutableSet.copyOf(entries);
     }
 
-    public void addEntry(IFeedListener entry) {
+    public void addEntry(FeedListener entry) {
         entries.add(entry);
     }
 
-    public void removeEntry(IFeedListener entry) {
+    public void removeEntry(FeedListener entry) {
         entries.remove(entry);
     }
 
@@ -31,7 +31,7 @@ public class FeedRegister {
         log.info("printing info");
         log.info("-----------------------------------------------------");
         entries.forEach(feedListener -> {
-            feedListener.print();
+            log.info(feedListener.toString());
             log.info("-----------------------------------------------------");
         });
     }

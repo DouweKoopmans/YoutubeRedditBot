@@ -43,15 +43,18 @@ public abstract class AbstractPoller extends TimerTask{
 
     @Override
     public final void run() {
-        listener.updateFeed();
+        if (listener.updateFeed()) {
 
-        int entries = scanForNewEntries(listener.getFeed().getEntries());
+            final int entries = scanForNewEntries(listener.getFeed().getEntries());
 
-        if (entries > 0) {
-            log.debug(String.format("poller for %s has found %s new videos", listener.getChannelId(), entries));
+            if (entries > 0) {
+                log.debug(String.format("poller for %s has found %s new videos", listener.getInstance().getChannelId(), entries));
+            }
+
+            this.runPoller(entries);
+        } else {
+            log.warn("something went wrong updating the feed, will not run poller");
         }
-
-        this.runPoller(entries);
     }
 
     protected abstract void runPoller(int entries);

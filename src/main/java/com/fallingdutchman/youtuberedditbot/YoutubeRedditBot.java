@@ -2,7 +2,6 @@ package com.fallingdutchman.youtuberedditbot;
 
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
-import com.rometools.rome.io.FeedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,14 +15,11 @@ public class YoutubeRedditBot {
     private static final Logger log = LoggerFactory.getLogger(YoutubeRedditBot.class);
     private static FeedRegister feedRegister = new FeedRegister();
 
-    // TODO: 12-1-16 add dry-run
-    // TODO: 29-9-16 provide password and username through command-line, not config file 
     public static void main(String[] args) {
         try {
             new YoutubeRedditBot().run();
         } catch (Exception e) {
-            log.error("an unexpected error occurred whilst executing the application. will now exit the application." +
-                    " the stacktrace", e);
+            log.error("an unexpected error occurred whilst executing the application. will now exit.", e);
         }
     }
 
@@ -61,13 +57,11 @@ public class YoutubeRedditBot {
             } catch (IOException e) {
                 log.error("was unable to read stream from URL, please make sure the youtubeFeed " +
                         "attribute in your config is correct and you the device is connected to the internet", e);
-            } catch (FeedException e) {
-                log.error("was unable to parse feed, please make sure the youtubeFeed attribute" +
-                        "in your config is correct", e);
             }
         });
 
         // start the listener
-        feedRegister.getEntries().forEach(IFeedListener::listen);
+        log.info("starting listeners");
+        feedRegister.getEntries().forEach(FeedListener::listen);
     }
 }

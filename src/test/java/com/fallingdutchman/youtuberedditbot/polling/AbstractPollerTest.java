@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
 import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
-import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.collect.Lists;

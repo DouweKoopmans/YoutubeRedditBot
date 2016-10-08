@@ -16,7 +16,7 @@ public class FileFormatterFactoryTest {
         final String testInput = "foo";
 
         assertEquals("generated file location for " + testInput + "was incorrect",
-                "/data/formats/" + testInput + ".md", FileFormatterFactory.generateFileLocation(testInput));
+                "data/formats/" + testInput + ".md", FileFormatterFactory.generateFileLocation(testInput));
     }
 
     @Test(expected=NullPointerException.class)
@@ -51,7 +51,7 @@ public class FileFormatterFactoryTest {
     public void generateFileLocationAdvanced() throws Exception {
         final String testInput = "FOO/BAR";
 
-        assertEquals("input string was not correctly clean", "/data/formats/foobar.md",
+        assertEquals("input string was not correctly clean", "data/formats/foobar.md",
                 FileFormatterFactory.generateFileLocation(testInput));
     }
 

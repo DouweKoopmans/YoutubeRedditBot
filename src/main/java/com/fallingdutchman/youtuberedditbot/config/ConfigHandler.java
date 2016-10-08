@@ -44,13 +44,13 @@ public class ConfigHandler {
             Config instance = object.toConfig();
 
             String type;
-            String youtubeFeed;
+            String channelId;
             String youtubeName = null;
             List<String> subreddits;
             boolean postDescription;
 
             type = instance.getString("type");
-            youtubeFeed = instance.getString("youtubeFeed");
+            channelId = instance.getString("channelId");
             subreddits = instance.getStringList("subreddit");
             postDescription = instance.getBoolean("postDescription");
 
@@ -58,7 +58,7 @@ public class ConfigHandler {
                 youtubeName = instance.getString("youtubeName");
             }
 
-            getEntries().add(createInstance(type, youtubeFeed, youtubeName, subreddits,
+            getEntries().add(createInstance(type, channelId, youtubeName, subreddits,
                     postDescription));
         }
     }

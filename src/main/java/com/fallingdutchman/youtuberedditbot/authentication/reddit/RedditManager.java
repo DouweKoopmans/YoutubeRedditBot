@@ -1,4 +1,4 @@
-package com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw;
+package com.fallingdutchman.youtuberedditbot.authentication.reddit;
 
 import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.base.MoreObjects;
@@ -55,10 +55,9 @@ public class RedditManager {
         final Credentials credentials = Credentials.script(redditCredentials.getRedditUserName(),
                 redditCredentials.getRedditPassword(), redditCredentials.getRedditClientId(),
                 redditCredentials.getRedditOauthSecret());
-
         try {
             final OAuthData authData = reddit.getOAuthHelper().easyAuth(credentials);
-            reddit.authenticate(authData); // TODO: 30-9-16 is throwing a 500 inernal server error
+            reddit.authenticate(authData);
         } catch (OAuthException e) {
             log.error("an OAuth exception occurred whilst trying authenticate "
                     + redditCredentials.getRedditUserName(), e);

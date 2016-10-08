@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.processing;
 
 import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
-import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.formatting.FileFormatterFactory;
 import com.fallingdutchman.youtuberedditbot.formatting.Formatter;
 import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;

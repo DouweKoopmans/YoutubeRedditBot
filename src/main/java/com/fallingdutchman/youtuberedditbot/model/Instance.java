@@ -15,27 +15,27 @@ public class Instance {
     private final Logger log = LoggerFactory.getLogger(Instance.class);
     private final String youtubeName;
     private final String type;
-    private final String youtubeFeed;
+    private final String channelId;
     private final List<String> subreddits;
 
     private final boolean postDescription;
 
-    public Instance(String type, String youtubeFeed, String youtubeName,
+    public Instance(String type, String channelId, String youtubeName,
                     List<String> subreddits, boolean postDescription) {
 
         Preconditions.checkNotNull(type);
-        Preconditions.checkNotNull(youtubeFeed);
+        Preconditions.checkNotNull(channelId);
         Preconditions.checkNotNull(subreddits);
         Preconditions.checkArgument(!subreddits.isEmpty());
         this.type = type;
-        this.youtubeFeed = youtubeFeed;
+        this.channelId = channelId;
         this.youtubeName = youtubeName;
         this.subreddits = subreddits;
         this.postDescription = postDescription;
     }
 
-    public String getYoutubeFeed() {
-        return youtubeFeed;
+    public String getChannelId() {
+        return channelId;
     }
 
     public List<String> getSubreddits() {
@@ -57,7 +57,7 @@ public class Instance {
     public void print() {
         log.info("Type: " + getType());
         log.info("Subreddits: " + getSubreddits());
-        log.info("YoutubeFeed: " + getYoutubeFeed());
+        log.info("YoutubeFeed: " + getChannelId());
         log.info("YoutubeName: " + getYoutubeName());
     }
 
@@ -70,13 +70,13 @@ public class Instance {
             return false;
         }
         Instance instance = (Instance) o;
-        return Objects.equal(getYoutubeFeed(), instance.getYoutubeFeed()) &&
+        return Objects.equal(getChannelId(), instance.getChannelId()) &&
                 Objects.equal(getSubreddits(), instance.getSubreddits());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getYoutubeFeed(), getSubreddits());
+        return Objects.hashCode(getChannelId(), getSubreddits());
     }
 
     @Override
@@ -84,7 +84,7 @@ public class Instance {
         return MoreObjects.toStringHelper(this)
                 .add("type", type)
                 .add("subreddits", subreddits)
-                .add("youtubeFeed", youtubeFeed)
+                .add("channelId", channelId)
                 .add("youtubeName", youtubeName)
                 .toString();
     }
