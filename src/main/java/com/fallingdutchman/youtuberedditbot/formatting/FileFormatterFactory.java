@@ -28,9 +28,7 @@ public class FileFormatterFactory implements FormatterFactory{
 
     @Override
     public Formatter createFormatterFromFile(File file) throws IOException {
-        final String strings = joinStrings(Files.readAllLines(Paths.get(file.toURI())));
-
-        return new Formatter(strings);
+        return new Formatter(joinStrings(Files.readAllLines(Paths.get(file.toURI()))));
     }
 
     static String generateFileLocation(final String name) throws FileNotFoundException {
@@ -39,7 +37,8 @@ public class FileFormatterFactory implements FormatterFactory{
         Preconditions.checkArgument(!name.endsWith("."));
         Preconditions.checkArgument(!name.startsWith("."));
 
-        return YrbUtils.LOCAL_HOST_FOLDER + '/' + FORMAT_FOLDER + "/" + name.replaceAll("/", "").toLowerCase(Locale.UK) + '.' + FORMAT_EXTENTION;
+        return YrbUtils.LOCAL_HOST_FOLDER + FORMAT_FOLDER + "/" + name.replaceAll("/", "").toLowerCase(Locale.UK) +
+                '.' + FORMAT_EXTENTION;
     }
 
     static String joinStrings(final List<String> strings) throws IOException{

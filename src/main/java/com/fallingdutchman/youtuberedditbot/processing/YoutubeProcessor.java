@@ -28,7 +28,7 @@ public final class YoutubeProcessor {
     public YoutubeProcessor(YoutubeVideo video, RedditManager reddit) {
         this.video = video;
         this.reddit = reddit;
-        formatterFactory = new FileFormatterFactory();
+        this.formatterFactory = new FileFormatterFactory();
     }
 
     public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost) {
