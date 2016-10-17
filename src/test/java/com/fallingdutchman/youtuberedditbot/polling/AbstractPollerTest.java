@@ -46,16 +46,16 @@ public class AbstractPollerTest {
         SyndEntry entry1 = new SyndEntryImpl();
         SyndEntry entry2 = new SyndEntryImpl();
 
-        LocalDateTime future = LocalDateTime.now().plusDays(2);
+        LocalDateTime future = LocalDateTime.now().plusMinutes(2);
 
         entry1.setPublishedDate(YrbUtils.localDateToDate(future));
-        entry2.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now()));
+        entry2.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now().minusMinutes(2)));
 
         List<SyndEntry> entries = Lists.newArrayList(entry1, entry2);
 
         assertEquals(1, poller.scanForNewEntries(entries));
 
-        entry1.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now()));
+        entry1.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now().minusMinutes(2)));
 
         assertEquals(0, poller.scanForNewEntries(entries));
     }
