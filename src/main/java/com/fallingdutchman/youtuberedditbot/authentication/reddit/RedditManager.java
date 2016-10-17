@@ -49,6 +49,7 @@ public class RedditManager {
      * @throws NetworkException when the request was not successful
      */
     public void authenticate(RedditCredentials redditCredentials) {
+        log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUserName());
         if (!shouldAuth) {
             return;
         }
@@ -58,6 +59,8 @@ public class RedditManager {
         try {
             final OAuthData authData = reddit.getOAuthHelper().easyAuth(credentials);
             reddit.authenticate(authData);
+            log.info("successfully authenticated {} for the reddit API",
+                    redditCredentials.getRedditUserName());
         } catch (OAuthException e) {
             log.error("an OAuth exception occurred whilst trying authenticate "
                     + redditCredentials.getRedditUserName(), e);
@@ -72,12 +75,13 @@ public class RedditManager {
      */
     public Optional<Submission> submitPost(String title, URL url, String subreddit) {
         try {
-            log.debug(String.format("attempting to submit new post to /r/%s, submission title %s", subreddit, title));
+            log.debug("attempting to submit new post to /r/{}, submission title {}, target url {}",
+                    subreddit, title, url.toExternalForm());
             final Submission submission = submitPost(new AccountManager.SubmissionBuilder(url, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
-            log.info(String.format("submitted url to /r/%s, submission id: %s", submission.getSubredditName(),
-                    submission.getId()));
+            log.info("submitted url to /r/{}, submission id: {}", submission.getSubredditName(),
+                    submission.getId());
 
             return Optional.of(submission);
         } catch (ApiException e) {
@@ -89,11 +93,13 @@ public class RedditManager {
 
     public Optional<Submission> submitSelfPost(String title, String text, String subreddit){
         try {
+            log.debug("attempting to submit new self post to /r/{}, submission title {}, body {}",
+                    subreddit, title, text);
             final Submission submission = submitPost(new AccountManager.SubmissionBuilder(text, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
-            log.info(String.format("submitted self post to /r/%s, submission id: %s", submission.getSubredditName(),
-                    submission.getId()));
+            log.info("submitted self post to /r/{}, submission id: {}", submission.getSubredditName(),
+                    submission.getId());
 
             return Optional.of(submission);
         } catch (ApiException e) {
@@ -116,8 +122,8 @@ public class RedditManager {
     public Optional<String> submitComment(String text,Submission submission) {
         try {
             final String commentId = accountManager.reply(submission, text);
-            log.info(String.format("posted comment to %s on /r/%s, with id %s", submission.getId(),
-                    submission.getSubredditName(), commentId));
+            log.info("posted comment to %s on /r/{}, with comment id {}", submission.getId(),
+                    submission.getSubredditName(), commentId);
 
             return Optional.of(commentId);
         } catch (ApiException e) {

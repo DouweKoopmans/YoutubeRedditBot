@@ -10,6 +10,7 @@ import com.fallingdutchman.youtuberedditbot.processing.YoutubeProcessor;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
@@ -26,8 +27,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Timer;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -38,7 +41,6 @@ public final class YoutubeFeedListener implements FeedListener {
     private final RedditManager authenticator;
     private LocalDateTime latestVideo = LocalDateTime.now();
     private final Instance instance;
-    private SyndFeed feed;
     private final AtomicReference<SyndFeed> feed = new AtomicReference<>();
     private Timer timer;
 
@@ -70,7 +72,15 @@ public final class YoutubeFeedListener implements FeedListener {
 
         try {
             if (updateFeed()) {
-                timer.schedule(getPoller(), 0, 30000);
+                final Optional<YoutubeVideo> youtubeVideo = this.find(feed.get().getEntries().get(0));
+                if (youtubeVideo.isPresent()) {
+                    this.setLatestVideo(youtubeVideo.get().getPublishDate());
+                    timer.schedule(getPoller(), 0, 30000);
+                }
+                else {
+                    log.warn(String.format("an error occurred whilst trying to start the listener, will not start" +
+                            " following listener %s", this));
+                }
             } else {
                 log.warn("was unable to initiate the feed will not start the poller for " + this.toString());
             }
@@ -97,21 +107,26 @@ public final class YoutubeFeedListener implements FeedListener {
         return feed.get();
     }
 
+    public List<SyndEntry> getFeedEntries() {
+        return ImmutableList.copyOf(getFeed().getEntries());
+    }
+
     public LocalDateTime getLatestVideo() {
         return latestVideo;
     }
 
     protected void setLatestVideo(LocalDateTime date) {
         this.latestVideo = date;
-        log.debug(String.format("setting latest video date of %s to %s", this, date));
+        log.debug("setting latest video date of {} to {}", this.instance.getChannelId(), date);
     }
 
-    public YoutubeVideo find(SyndEntry entry) {
-        URL url = null;
+    public Optional<YoutubeVideo> find(SyndEntry entry) {
+        URL url;
         try {
             url = new URL(entry.getLink());
         } catch (MalformedURLException e) {
             log.error("url on found entry is malformed", e);
+            return Optional.empty();
         }
         String videoId;
         String description = "";
@@ -125,7 +140,8 @@ public final class YoutubeFeedListener implements FeedListener {
         if (optionalVideoId.isPresent()) {
             videoId = optionalVideoId.get().getValue();
         } else {
-            throw new IllegalArgumentException("was not able to find a videoId in feed entry " + entry.toString());
+            log.error("was not able to find a videoId in feed entry " + entry.toString());
+            return Optional.empty();
         }
 
         // find description
@@ -145,20 +161,22 @@ public final class YoutubeFeedListener implements FeedListener {
             description = des.get();
         }
 
-        return new YoutubeVideo(entry.getTitle(), videoId, url, description, publishDate, instance.getChannelId());
+        return Optional.of(new YoutubeVideo(entry.getTitle(), videoId, url, description, publishDate,
+                instance.getChannelId()));
     }
 
     public void newVideoPosted(YoutubeVideo video) {
         log.info("found a new video, \n" + video.toString());
         this.setLatestVideo(video.getPublishDate());
-        final YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
+        YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
 
+        log.info("processing video, id=\"{}\"", video.getVideoId());
         getInstance().getSubreddits().forEach(processVideo(processor));
     }
 
     private Consumer<String> processVideo(YoutubeProcessor processor) {
         return subreddit -> {
-            log.debug(String.format("attempting to process new video for /r/%s", subreddit));
+            log.debug("processing new video for /r/{}", subreddit);
             final Optional<Submission> submission = processor.postVideo(subreddit, false);
 
             if (submission.isPresent() && instance.shouldPostDescription()) {

@@ -4,13 +4,17 @@ import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
 import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.google.common.base.Preconditions;
 import com.rometools.rome.feed.synd.SyndEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
  * Created by Douwe Koopmans on 10-1-16.
  */
 public class DescriptionListenerPoller extends AbstractPoller {
+    private static final Logger log = LoggerFactory.getLogger(DefaultNewVideoPoller.class);
 
     public DescriptionListenerPoller(YoutubeFeedListener listener) {
         super(listener);
@@ -19,11 +23,15 @@ public class DescriptionListenerPoller extends AbstractPoller {
     @Override
     protected void runPoller(int entries) {
         for (int i = entries - 1; i >= 0; i--) {
-            SyndEntry entry = listener.getFeed().getEntries().get(i);
-            YoutubeVideo video = listener.find(entry);
-            if (checkEntry(video.getDescription(), listener.getInstance().getYoutubeName(),
-                    listener.getInstance().getChannelId())) {
-                this.listener.newVideoPosted(video);
+            SyndEntry entry = listener.getFeedEntries().get(i);
+            Optional<YoutubeVideo> video = listener.find(entry);
+            if (video.isPresent()) {
+                if (checkEntry(video.get().getDescription(), listener.getInstance().getYoutubeName(),
+                        listener.getInstance().getChannelId())) {
+                    this.listener.newVideoPosted(video.get());
+                } else {
+                    log.debug("was unable to extract video from rss feed, feed might have been malformed in some way");
+                }
             }
         }
     }

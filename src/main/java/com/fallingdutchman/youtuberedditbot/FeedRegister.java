@@ -19,15 +19,19 @@ public class FeedRegister {
     }
 
     public void addEntry(FeedListener entry) {
+        log.info("registered listener: " + entry);
         entries.add(entry);
     }
 
     public void removeEntry(FeedListener entry) {
-        entries.remove(entry);
+        log.debug("removing registry entry for listener " + entry);
+        if (entries.remove(entry)) {
+            log.info("removed registry entry " + entry);
+        }
     }
 
     public void print() {
-        log.info(String.format("there are currently %s feeds registered", entries.size()));
+        log.info("there are currently {} feeds registered", entries.size());
         log.info("printing info");
         log.info("-----------------------------------------------------");
         entries.forEach(feedListener -> {

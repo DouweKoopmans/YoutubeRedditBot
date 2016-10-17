@@ -1,12 +1,10 @@
 package com.fallingdutchman.youtuberedditbot;
 
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
-import com.fallingdutchman.youtuberedditbot.model.Instance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by Douwe Koopmans on 8-1-16.
@@ -45,15 +43,16 @@ public class YoutubeRedditBot {
         }
 
         // get all entries
-        List<Instance> entries = ConfigHandler.getInstance().getEntries();
 
-        log.info(String.format("found and initialising %s entries", entries.size()));
+        log.info("found and initialising {} entries", ConfigHandler.getInstance().getEntries().size());
 
-        entries.forEach(instance -> {
+        ConfigHandler.getInstance().getEntries().forEach(instance -> {
             // add a register a feed listener for every entry
             try {
-                feedRegister.addEntry(YoutubeFeedListener.of(instance,
-                        ConfigHandler.getInstance().getRedditCredentials().getRedditUserName()));
+                log.info("initialising listener for " + instance);
+                final YoutubeFeedListener feedListener = YoutubeFeedListener.of(instance,
+                        ConfigHandler.getInstance().getRedditCredentials().getRedditUserName());
+                feedRegister.addEntry(feedListener);
             } catch (IOException e) {
                 log.error("was unable to read stream from URL, please make sure the youtubeFeed " +
                         "attribute in your config is correct and you the device is connected to the internet", e);

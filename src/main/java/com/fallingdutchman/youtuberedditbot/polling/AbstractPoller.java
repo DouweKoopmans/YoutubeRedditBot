@@ -1,6 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
 import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
+import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.TimerTask;
 
 /**
@@ -43,18 +45,27 @@ public abstract class AbstractPoller extends TimerTask{
 
     @Override
     public final void run() {
+        final long startTime = System.currentTimeMillis();
         if (listener.updateFeed()) {
 
-            final int entries = scanForNewEntries(listener.getFeed().getEntries());
+            final Optional<YoutubeVideo> latestVideo = listener.find(listener.getFeedEntries().get(0));
+
+            latestVideo.ifPresent(video -> log.debug("latest entry: {id={}, date={}}", video.getVideoId(),
+                    video.getPublishDate()));
+
+            final int entries = scanForNewEntries(listener.getFeedEntries());
 
             if (entries > 0) {
-                log.debug(String.format("poller for %s has found %s new videos", listener.getInstance().getChannelId(), entries));
+                log.debug("poller for %s has found {} new videos", listener.getInstance().getChannelId(),
+                        entries);
             }
 
             this.runPoller(entries);
         } else {
             log.warn("something went wrong updating the feed, will not run poller");
         }
+
+        log.debug("finished polling in {} milliseconds", System.currentTimeMillis() - startTime);
     }
 
     protected abstract void runPoller(int entries);
