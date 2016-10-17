@@ -50,6 +50,10 @@ distTar {
     extension = 'tar.gz'
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.1'
+}
+
 ext.priv = parseConfig(file('private.properties'))
 
 // docker shit below
