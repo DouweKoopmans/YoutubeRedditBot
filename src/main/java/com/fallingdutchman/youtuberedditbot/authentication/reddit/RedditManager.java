@@ -91,7 +91,7 @@ public class RedditManager {
         }
     }
 
-    public Optional<Submission> submitSelfPost(String title, String text, String subreddit){
+    public Optional<Submission> submitSelfPost(String title, String text, String subreddit) {
         try {
             log.debug("attempting to submit new self post to /r/{}, submission title {}, body {}",
                     subreddit, title, text);

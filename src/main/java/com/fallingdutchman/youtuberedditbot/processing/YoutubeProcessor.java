@@ -7,6 +7,7 @@ import com.fallingdutchman.youtuberedditbot.formatting.Formatter;
 import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Submission;
 
 import java.io.IOException;
@@ -29,11 +30,23 @@ public final class YoutubeProcessor {
         this.formatterFactory = new FileFormatterFactory();
     }
 
-    public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost) {
+    public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost, Runnable listener) {
         if (selfPost) {
             throw new UnsupportedOperationException("don't support self posts");
         } else {
-            return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
+            try {
+                return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
+            } catch (NetworkException e) {
+                log.error("post attempt was unsuccessful", e);
+                log.warn("attempting reauthentication");
+                listener.run();
+                try {
+                    return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
+                } catch (NetworkException ex) {
+                    log.error("reauthentication attempt failed", ex);
+                    return Optional.empty();
+                }
+            }
         }
     }
 

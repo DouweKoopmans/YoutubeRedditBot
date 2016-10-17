@@ -176,8 +176,8 @@ public final class YoutubeFeedListener implements FeedListener {
     private Consumer<String> processVideo(YoutubeProcessor processor) {
         return subreddit -> {
             log.debug("processing new video for /r/{}", subreddit);
-            final Optional<Submission> submission = processor.postVideo(subreddit, false);
-
+            final Optional<Submission> submission = processor.postVideo(subreddit, false,
+                    () -> this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials()));
             if (submission.isPresent() && instance.shouldPostDescription()) {
                 processor.postComment(submission.get(), "description");
             }
