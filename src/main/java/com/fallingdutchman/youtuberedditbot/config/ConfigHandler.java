@@ -4,6 +4,7 @@ import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -58,7 +59,7 @@ public class ConfigHandler {
                 youtubeName = instance.getString("youtubeName");
             }
 
-            getEntries().add(createInstance(type, channelId, youtubeName, subreddits,
+            entries.add(createInstance(type, channelId, youtubeName, subreddits,
                     postDescription));
         }
     }
@@ -70,7 +71,7 @@ public class ConfigHandler {
     }
 
     public List<Instance> getEntries() {
-        return entries;
+        return ImmutableList.copyOf(entries);
     }
 
     public RedditCredentials getRedditCredentials() {
