@@ -39,6 +39,7 @@ public final class YoutubeFeedListener implements FeedListener {
     private LocalDateTime latestVideo = LocalDateTime.now();
     private final Instance instance;
     private SyndFeed feed;
+    private final AtomicReference<SyndFeed> feed = new AtomicReference<>();
     private Timer timer;
 
     private final AbstractPoller poller;
@@ -92,8 +93,8 @@ public final class YoutubeFeedListener implements FeedListener {
         return instance;
     }
 
-    public SyndFeed getFeed() {
-        return feed;
+    private SyndFeed getFeed() {
+        return feed.get();
     }
 
     public LocalDateTime getLatestVideo() {
@@ -167,26 +168,21 @@ public final class YoutubeFeedListener implements FeedListener {
     }
 
     public boolean updateFeed() {
-        synchronized (YoutubeFeedListener.class) {
-            try (XmlReader reader = new XmlReader(new URL(generateFeedUrlFromId(instance.getChannelId())))) {
-                SyndFeedInput input = new SyndFeedInput();
-                this.feed = input.build(reader);
-
-                log.trace(String.format("updated feed of %s", instance.getChannelId()));
-            } catch (FeedException e) {
-                log.error("was unable to parse feed", e);
-                return false;
-            } catch (MalformedURLException e) {
-                log.error(String.format("youtube feed URL is malformed, please check the configurations " +
-                        "for channel-id %s", instance.getChannelId()), e);
-                return false;
-            } catch (IOException e) {
-                log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
-                return false;
-            }
-
-            return true;
+        try (XmlReader reader = new XmlReader(new URL(generateFeedUrlFromId(instance.getChannelId())))) {
+            this.feed.set(new SyndFeedInput().build(reader));
+            log.trace("updated feed of {}", instance.getChannelId());
+        } catch (FeedException e) {
+            log.error("was unable to parse feed", e);
+            return false;
+        } catch (MalformedURLException e) {
+            log.error(String.format("youtube feed URL is malformed, please check the configurations " +
+                    "for channel-id %s", instance.getChannelId()), e);
+            return false;
+        } catch (IOException e) {
+            log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
+            return false;
         }
+        return true;
     }
 
     private String generateFeedUrlFromId(final String channelId) {
