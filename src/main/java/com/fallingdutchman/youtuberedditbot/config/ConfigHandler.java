@@ -19,9 +19,8 @@ import java.util.List;
 public class ConfigHandler {
     private static ConfigHandler ourInstance = new ConfigHandler();
 
-    private Config conf = ConfigFactory.parseFile(new File(YrbUtils.LOCAL_HOST_FOLDER + "application.conf"));
-
-    private List<Instance> entries = Lists.newArrayList();
+    private final Config conf = ConfigFactory.parseFile(new File(YrbUtils.LOCAL_HOST_FOLDER + "application.conf"));
+    private final List<Instance> entries = Lists.newArrayList();
     private RedditCredentials redditCredentials;
 
     private ConfigHandler() {

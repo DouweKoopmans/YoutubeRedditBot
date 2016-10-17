@@ -6,9 +6,8 @@ import com.fallingdutchman.youtuberedditbot.formatting.FileFormatterFactory;
 import com.fallingdutchman.youtuberedditbot.formatting.Formatter;
 import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import net.dean.jraw.models.Submission;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,9 +16,8 @@ import java.util.Optional;
 /**
  * Created by douwe on 2-10-16.
  */
+@Slf4j
 public final class YoutubeProcessor {
-    private static final Logger log = LoggerFactory.getLogger(YoutubeProcessor.class);
-
     private final YoutubeVideo video;
     private final RedditManager reddit;
 

@@ -1,8 +1,9 @@
 package com.fallingdutchman.youtuberedditbot.authentication.reddit;
 
 import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import net.dean.jraw.ApiException;
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.NetworkException;
@@ -12,8 +13,6 @@ import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthException;
 import net.dean.jraw.managers.AccountManager;
 import net.dean.jraw.models.Submission;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.Optional;
@@ -24,9 +23,10 @@ import java.util.Optional;
  *
  * Created by Douwe Koopmans on 28-1-16.
  */
+@Slf4j
+@ToString
+@EqualsAndHashCode
 public class RedditManager {
-    private static final Logger log = LoggerFactory.getLogger(RedditManager.class);
-
     private final RedditClient reddit;
 
     /**
@@ -130,27 +130,5 @@ public class RedditManager {
             log.error("was unable to post comment", e);
             return Optional.empty();
         }
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("reddit", reddit)
-                .add("shouldAuth", shouldAuth)
-                .toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof RedditManager)) return false;
-        RedditManager that = (RedditManager) o;
-        return shouldAuth == that.shouldAuth &&
-                Objects.equal(reddit, that.reddit);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(reddit, shouldAuth);
     }
 }

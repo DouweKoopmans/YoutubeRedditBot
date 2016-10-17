@@ -5,8 +5,7 @@ import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.rometools.rome.feed.synd.SyndEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,8 +15,8 @@ import java.util.TimerTask;
 /**
  * Created by Douwe Koopmans on 10-1-16.
  */
+@Slf4j
 public abstract class AbstractPoller extends TimerTask{
-    private static final Logger log = LoggerFactory.getLogger(AbstractPoller.class);
     protected final YoutubeFeedListener listener;
 
     protected AbstractPoller(YoutubeFeedListener listener) {

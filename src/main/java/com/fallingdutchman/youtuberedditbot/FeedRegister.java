@@ -2,16 +2,15 @@ package com.fallingdutchman.youtuberedditbot;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
 
 /**
  * Created by douwe on 6-10-16.
  */
+@Slf4j
 public class FeedRegister {
-    private static final Logger log = LoggerFactory.getLogger(FeedRegister.class);
     private final Set<FeedListener> entries = Sets.newConcurrentHashSet();
 
     public Set<FeedListener> getEntries() {

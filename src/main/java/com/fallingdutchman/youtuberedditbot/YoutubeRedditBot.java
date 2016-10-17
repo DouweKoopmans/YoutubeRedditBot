@@ -1,16 +1,15 @@
 package com.fallingdutchman.youtuberedditbot;
 
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
 /**
  * Created by Douwe Koopmans on 8-1-16.
  */
+@Slf4j
 public class YoutubeRedditBot {
-    private static final Logger log = LoggerFactory.getLogger(YoutubeRedditBot.class);
     private static FeedRegister feedRegister = new FeedRegister();
 
     public static void main(String[] args) {

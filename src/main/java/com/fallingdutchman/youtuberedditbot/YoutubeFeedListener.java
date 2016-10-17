@@ -7,8 +7,6 @@ import com.fallingdutchman.youtuberedditbot.polling.AbstractPoller;
 import com.fallingdutchman.youtuberedditbot.polling.DefaultNewVideoPoller;
 import com.fallingdutchman.youtuberedditbot.polling.DescriptionListenerPoller;
 import com.fallingdutchman.youtuberedditbot.processing.YoutubeProcessor;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -16,11 +14,12 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import net.dean.jraw.models.Submission;
 import org.jdom2.Content;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -36,8 +35,10 @@ import java.util.function.Consumer;
 /**
  * Created by Douwe Koopmans on 8-1-16.
  */
+@Slf4j
+@ToString
+@EqualsAndHashCode
 public final class YoutubeFeedListener implements FeedListener {
-    private static final Logger log = LoggerFactory.getLogger(YoutubeFeedListener.class);
     private final RedditManager authenticator;
     private LocalDateTime latestVideo = LocalDateTime.now();
     private final Instance instance;
@@ -217,31 +218,4 @@ public final class YoutubeFeedListener implements FeedListener {
         }
     }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("latestVideo", latestVideo)
-                .add("instance", instance)
-                .toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof YoutubeFeedListener)) {
-            return false;
-        }
-        YoutubeFeedListener that = (YoutubeFeedListener) o;
-        return Objects.equal(timer, that.timer) &&
-                Objects.equal(getLatestVideo(), that.getLatestVideo()) &&
-                Objects.equal(instance, that.instance) &&
-                Objects.equal(getFeed(), that.getFeed());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(instance.getChannelId(), timer, getLatestVideo(), instance, getFeed());
-    }
 }
