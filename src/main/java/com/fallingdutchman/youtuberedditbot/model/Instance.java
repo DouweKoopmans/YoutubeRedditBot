@@ -18,8 +18,8 @@ public final class Instance {
     private final List<String> subreddits;
     private final boolean postDescription;
 
-    public Instance(String type, String channelId, String youtubeName,
-                    List<String> subreddits, boolean postDescription) {
+    public Instance(String type, String channelId, String youtubeName, List<String> subreddits,
+                    boolean postDescription) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(channelId);
         Preconditions.checkNotNull(subreddits);

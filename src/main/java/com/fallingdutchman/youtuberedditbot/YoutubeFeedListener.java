@@ -36,16 +36,15 @@ import java.util.function.Consumer;
  * Created by Douwe Koopmans on 8-1-16.
  */
 @Slf4j
-@ToString
-@EqualsAndHashCode
+@ToString(exclude = {"feed", "timer", "authenticator", "poller"}, doNotUseGetters = true)
+@EqualsAndHashCode(exclude = {"feed", "timer"})
 public final class YoutubeFeedListener implements FeedListener {
     private final RedditManager authenticator;
-    private LocalDateTime latestVideo = LocalDateTime.now();
     private final Instance instance;
     private final AtomicReference<SyndFeed> feed = new AtomicReference<>();
-    private Timer timer;
-
     private final AbstractPoller poller;
+    private LocalDateTime latestVideo = LocalDateTime.now();
+    private Timer timer;
 
     private YoutubeFeedListener(RedditManager authenticator, Instance instance) throws IOException {
         Preconditions.checkNotNull(authenticator);
@@ -77,8 +76,7 @@ public final class YoutubeFeedListener implements FeedListener {
                 if (youtubeVideo.isPresent()) {
                     this.setLatestVideo(youtubeVideo.get().getPublishDate());
                     timer.schedule(getPoller(), 0, 30000);
-                }
-                else {
+                } else {
                     log.warn(String.format("an error occurred whilst trying to start the listener, will not start" +
                             " following listener %s", this));
                 }

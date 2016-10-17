@@ -64,8 +64,8 @@ public class ConfigHandler {
     }
 
     @VisibleForTesting
-    public Instance createInstance(String type, String youtubeFeed, String youtubeName,
-                                   List<String> subreddits, boolean postDescription) {
+    public Instance createInstance(String type, String youtubeFeed, String youtubeName, List<String> subreddits,
+                                   boolean postDescription) {
         return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription);
     }
 

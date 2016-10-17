@@ -31,7 +31,7 @@ public class DescriptionListenerPollerTest {
 
     @Test
     public void checkEntryMultiline() throws Exception {
-        final String description = String.format("test123\n\n foo %s bar\ntest",
+        final String description = String.format("test123%n%n foo %s bar%ntest",
                 "https://www.youtube.com/" + singleLineDescription);
 
         Assert.assertTrue(DescriptionListenerPoller.checkEntry(description, channelName, channelId));
