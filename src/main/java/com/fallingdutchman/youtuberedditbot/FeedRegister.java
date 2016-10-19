@@ -23,9 +23,9 @@ public class FeedRegister {
     }
 
     public void removeEntry(FeedListener entry) {
-        log.debug("removing registry entry for listener " + entry);
+        log.debug("removing registry entry for listener {}", entry);
         if (entries.remove(entry)) {
-            log.info("removed registry entry " + entry);
+            log.info("removed registry entry {}", entry);
         }
     }
 

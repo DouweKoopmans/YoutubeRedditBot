@@ -67,7 +67,7 @@ public final class YoutubeFeedListener implements FeedListener {
 
     @Override
     public final void listen() {
-        log.info("starting up new listener for " + instance.getChannelId());
+        log.info("starting up new listener for {}", instance.getChannelId());
         timer = new Timer();
 
         try {
@@ -77,11 +77,11 @@ public final class YoutubeFeedListener implements FeedListener {
                     this.setLatestVideo(youtubeVideo.get().getPublishDate());
                     timer.schedule(getPoller(), 0, 30000);
                 } else {
-                    log.warn(String.format("an error occurred whilst trying to start the listener, will not start" +
-                            " following listener %s", this));
+                    log.warn("an error occurred whilst trying to start the listener, will not start" +
+                            " following listener {}", this);
                 }
             } else {
-                log.warn("was unable to initiate the feed will not start the poller for " + this.toString());
+                log.warn("was unable to initiate the feed will not start the poller for {}", this.toString());
             }
         } catch (Exception e) {
             log.error("an error occurred whilst trying to Listen to the feed: ", e);
@@ -90,33 +90,17 @@ public final class YoutubeFeedListener implements FeedListener {
 
     @Override
     public final void stopListening() {
-        log.info("stopping listener for " + instance.getChannelId());
+        log.info("stopping listener for {}", instance.getChannelId());
         timer.cancel();
     }
 
-    public AbstractPoller getPoller() {
-        return poller;
-    }
+    public void newVideoPosted(YoutubeVideo video) {
+        log.info("found a new video, \n {}", video.toString());
+        this.setLatestVideo(video.getPublishDate());
+        YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
 
-    public Instance getInstance() {
-        return instance;
-    }
-
-    private SyndFeed getFeed() {
-        return feed.get();
-    }
-
-    public List<SyndEntry> getFeedEntries() {
-        return ImmutableList.copyOf(getFeed().getEntries());
-    }
-
-    public LocalDateTime getLatestVideo() {
-        return latestVideo;
-    }
-
-    protected void setLatestVideo(LocalDateTime date) {
-        this.latestVideo = date;
-        log.debug("setting latest video date of {} to {}", this.instance.getChannelId(), date);
+        log.info("processing video, id=\"{}\"", video.getVideoId());
+        getInstance().getSubreddits().forEach(processVideo(processor));
     }
 
     public Optional<YoutubeVideo> find(SyndEntry entry) {
@@ -139,7 +123,7 @@ public final class YoutubeFeedListener implements FeedListener {
         if (optionalVideoId.isPresent()) {
             videoId = optionalVideoId.get().getValue();
         } else {
-            log.error("was not able to find a videoId in feed entry " + entry.toString());
+            log.error("was not able to find a videoId in feed entry {}", entry.toString());
             return Optional.empty();
         }
 
@@ -164,13 +148,47 @@ public final class YoutubeFeedListener implements FeedListener {
                 instance.getChannelId()));
     }
 
-    public void newVideoPosted(YoutubeVideo video) {
-        log.info("found a new video, \n" + video.toString());
-        this.setLatestVideo(video.getPublishDate());
-        YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
+    public boolean updateFeed() {
+        try (XmlReader reader = new XmlReader(new URL(getFeedUrl()))) {
+            this.feed.set(new SyndFeedInput().build(reader));
+            log.trace("updated feed of {}", instance.getChannelId());
+        } catch (FeedException e) {
+            log.error("was unable to parse feed", e);
+            return false;
+        } catch (MalformedURLException e) {
+            log.error("youtube feed URL is malformed, please check the configurations " +
+                    "for channel-id {}", instance.getChannelId(), e);
+            return false;
+        } catch (IOException e) {
+            log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
+            return false;
+        }
+        return true;
+    }
 
-        log.info("processing video, id=\"{}\"", video.getVideoId());
-        getInstance().getSubreddits().forEach(processVideo(processor));
+    public LocalDateTime getLatestVideo() {
+        return latestVideo;
+    }
+
+    public Instance getInstance() {
+        return instance;
+    }
+
+    public List<SyndEntry> getFeedEntries() {
+        return ImmutableList.copyOf(getFeed().getEntries());
+    }
+
+    private SyndFeed getFeed() {
+        return feed.get();
+    }
+
+    private AbstractPoller getPoller() {
+        return poller;
+    }
+
+    private void setLatestVideo(LocalDateTime date) {
+        this.latestVideo = date;
+        log.debug("setting latest video date of {} to {}", this.instance.getChannelId(), date);
     }
 
     private Consumer<String> processVideo(YoutubeProcessor processor) {
@@ -184,26 +202,8 @@ public final class YoutubeFeedListener implements FeedListener {
         };
     }
 
-    public boolean updateFeed() {
-        try (XmlReader reader = new XmlReader(new URL(generateFeedUrlFromId(instance.getChannelId())))) {
-            this.feed.set(new SyndFeedInput().build(reader));
-            log.trace("updated feed of {}", instance.getChannelId());
-        } catch (FeedException e) {
-            log.error("was unable to parse feed", e);
-            return false;
-        } catch (MalformedURLException e) {
-            log.error(String.format("youtube feed URL is malformed, please check the configurations " +
-                    "for channel-id %s", instance.getChannelId()), e);
-            return false;
-        } catch (IOException e) {
-            log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
-            return false;
-        }
-        return true;
-    }
-
-    private String generateFeedUrlFromId(final String channelId) {
-        return String.format("https://www.youtube.com/feeds/videos.xml?channel_id=%s", channelId);
+    private String getFeedUrl() {
+        return String.format("https://www.youtube.com/feeds/videos.xml?channel_id=%s", getInstance().getChannelId());
     }
 
     private AbstractPoller createPoller() {

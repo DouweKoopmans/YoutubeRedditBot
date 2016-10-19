@@ -85,8 +85,8 @@ public class RedditManager {
 
             return Optional.of(submission);
         } catch (ApiException e) {
-            log.error(String.format("an API exception occurred whilst trying to submit a post to /r/%s " +
-                    "with the title %s and url %s", subreddit, title, url), e);
+            log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
+                    "with the title {} and url {}", subreddit, title, url, e);
             return Optional.empty();
         }
     }
@@ -103,8 +103,8 @@ public class RedditManager {
 
             return Optional.of(submission);
         } catch (ApiException e) {
-            log.error(String.format("an API exception occurred whilst trying to submit a post to /r/%s " +
-                    "with the title %s and url %s", subreddit, title, text), e);
+            log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
+                    "with the title {} and url {}", subreddit, title, text, e);
             return Optional.empty();
         }
     }
@@ -122,7 +122,7 @@ public class RedditManager {
     public Optional<String> submitComment(String text,Submission submission) {
         try {
             final String commentId = accountManager.reply(submission, text);
-            log.info("posted comment to %s on /r/{}, with comment id {}", submission.getId(),
+            log.info("posted comment to {} on /r/{}, with comment id {}", submission.getId(),
                     submission.getSubredditName(), commentId);
 
             return Optional.of(commentId);

@@ -48,7 +48,7 @@ public class YoutubeRedditBot {
         ConfigHandler.getInstance().getEntries().forEach(instance -> {
             // add a register a feed listener for every entry
             try {
-                log.info("initialising listener for " + instance);
+                log.info("initialising listener for {}", instance);
                 final YoutubeFeedListener feedListener = YoutubeFeedListener.of(instance,
                         ConfigHandler.getInstance().getRedditCredentials().getRedditUserName());
                 feedRegister.addEntry(feedListener);

@@ -55,7 +55,7 @@ public abstract class AbstractPoller extends TimerTask{
             final int entries = scanForNewEntries(listener.getFeedEntries());
 
             if (entries > 0) {
-                log.debug("poller for %s has found {} new videos", listener.getInstance().getChannelId(),
+                log.debug("poller for {} has found {} new videos", listener.getInstance().getChannelId(),
                         entries);
             }
 

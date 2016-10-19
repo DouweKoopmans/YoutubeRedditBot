@@ -62,7 +62,7 @@ public final class YoutubeProcessor {
         try {
             formatter = formatterFactory.createFormatterFromName(formatName);
         } catch (IOException e) {
-            log.error(String.format("was unable to create Formatter from %s", formatName), e);
+            log.error("was unable to create Formatter from {}", formatName, e);
             return Optional.empty();
         }
 
