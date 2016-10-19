@@ -1,14 +1,15 @@
 package com.fallingdutchman.youtuberedditbot.config;
 
-import com.fallingdutchman.youtuberedditbot.config.model.Instance;
-import com.fallingdutchman.youtuberedditbot.config.model.RedditCredentials;
+import com.fallingdutchman.youtuberedditbot.YrbUtils;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.List;
 
@@ -18,15 +19,13 @@ import java.util.List;
 public class ConfigHandler {
     private static ConfigHandler ourInstance = new ConfigHandler();
 
-    private Config conf = ConfigFactory.parseFile(new File("application.conf"));
-
-    private List<Instance> entries = Lists.newArrayList();
+    private final Config conf = ConfigFactory.parseFile(new File(YrbUtils.LOCAL_HOST_FOLDER + "application.conf"));
+    private final List<Instance> entries = Lists.newArrayList();
     private RedditCredentials redditCredentials;
 
     private ConfigHandler() {
     }
 
-    // TODO: 20-9-16 instead of a getInstance use dependency injection 
     public static ConfigHandler getInstance() {
         return ourInstance;
     }
@@ -45,36 +44,39 @@ public class ConfigHandler {
             Config instance = object.toConfig();
 
             String type;
-            String youtubeFeed;
-            String descriptionRegex = null;
+            String channelId;
             String youtubeName = null;
             List<String> subreddits;
+            boolean postDescription;
+            double pollerInterval;
 
             type = instance.getString("type");
-            youtubeFeed = instance.getString("youtubeFeed");
+            channelId = instance.getString("channelId");
             subreddits = instance.getStringList("subreddit");
+            postDescription = instance.getBoolean("postDescription");
+            pollerInterval = instance.getDouble("interval");
+
+            if (pollerInterval < 0.5F) {
+                pollerInterval = 0.5F;
+            }
 
             if ("descriptionListener".equals(type)) {
                 youtubeName = instance.getString("youtubeName");
-
-
-            } else if ("newVideoListener".equals(type)) {
-                descriptionRegex = instance.getString("descriptionRegex");
             }
 
-            getEntries().add(createInstance(type, youtubeFeed, descriptionRegex, youtubeName, subreddits));
+            entries.add(createInstance(type, channelId, youtubeName, subreddits,
+                    postDescription, pollerInterval));
         }
     }
 
     @VisibleForTesting
-    @Nonnull
-    public Instance createInstance(String type, String youtubeFeed, String descriptionRegex, String youtubeName,
-                                   List<String> subreddits) {
-        return new Instance(type, youtubeFeed, descriptionRegex, youtubeName, subreddits);
+    public Instance createInstance(String type, String youtubeFeed, String youtubeName, List<String> subreddits,
+                                   boolean postDescription, double pollerInterval) {
+        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription, pollerInterval);
     }
 
     public List<Instance> getEntries() {
-        return entries;
+        return ImmutableList.copyOf(entries);
     }
 
     public RedditCredentials getRedditCredentials() {

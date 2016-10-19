@@ -1,8 +1,11 @@
-package com.fallingdutchman.youtuberedditbot.config.model;
+package com.fallingdutchman.youtuberedditbot.model;
+
+import lombok.Data;
 
 /**
  * Created by douwe on 20-9-16.
  */
+@Data
 public class RedditCredentials {
     private final String redditClientId;
     private final String redditOauthSecret;
@@ -15,21 +18,5 @@ public class RedditCredentials {
         this.redditOauthSecret = redditOauthSecret;
         this.redditUserName = redditUserName;
         this.redditPassword = redditPassword;
-    }
-
-    public String getRedditClientId() {
-        return redditClientId;
-    }
-
-    public String getRedditOauthSecret() {
-        return redditOauthSecret;
-    }
-
-    public String getRedditUserName() {
-        return redditUserName;
-    }
-
-    public String getRedditPassword() {
-        return redditPassword;
     }
 }

@@ -1,6 +1,7 @@
-package com.fallingdutchman.youtuberedditbot.listeners;
+package com.fallingdutchman.youtuberedditbot.polling;
 
-import com.fallingdutchman.youtuberedditbot.authentication.reddit.jraw.RedditManager;
+import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.collect.Lists;
@@ -18,19 +19,19 @@ import static org.junit.Assert.assertEquals;
  * Created by Douwe Koopmans on 22-1-16.
  */
 public class AbstractPollerTest {
-    AbstractPoller poller;
+    private AbstractPoller poller;
 
     @Before
     public void setUp() throws Exception {
         RedditManager authenticator = new RedditManager("fake");
         authenticator.shouldAuth = false;
-        FeedListener listener = FeedListener.of(ConfigHandler.getInstance().createInstance(
+        YoutubeFeedListener listener = YoutubeFeedListener.of(ConfigHandler.getInstance().createInstance(
                 "fake",
                 "fake",
                 "fake",
-                "fake",
-                Lists.asList("fake", new String[0])
-        ), authenticator);
+                Lists.asList("fake", new String[0]),
+                false,
+                pollerInterval), authenticator);
 
         poller = new AbstractPoller(listener) {
             @Override
@@ -45,16 +46,16 @@ public class AbstractPollerTest {
         SyndEntry entry1 = new SyndEntryImpl();
         SyndEntry entry2 = new SyndEntryImpl();
 
-        LocalDateTime future = LocalDateTime.now().plusDays(2);
+        LocalDateTime future = LocalDateTime.now().plusMinutes(2);
 
         entry1.setPublishedDate(YrbUtils.localDateToDate(future));
-        entry2.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now()));
+        entry2.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now().minusMinutes(2)));
 
         List<SyndEntry> entries = Lists.newArrayList(entry1, entry2);
 
         assertEquals(1, poller.scanForNewEntries(entries));
 
-        entry1.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now()));
+        entry1.setPublishedDate(YrbUtils.localDateToDate(LocalDateTime.now().minusMinutes(2)));
 
         assertEquals(0, poller.scanForNewEntries(entries));
     }
