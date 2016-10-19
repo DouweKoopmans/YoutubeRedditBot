@@ -48,25 +48,31 @@ public class ConfigHandler {
             String youtubeName = null;
             List<String> subreddits;
             boolean postDescription;
+            double pollerInterval;
 
             type = instance.getString("type");
             channelId = instance.getString("channelId");
             subreddits = instance.getStringList("subreddit");
             postDescription = instance.getBoolean("postDescription");
+            pollerInterval = instance.getDouble("interval");
+
+            if (pollerInterval < 0.5F) {
+                pollerInterval = 0.5F;
+            }
 
             if ("descriptionListener".equals(type)) {
                 youtubeName = instance.getString("youtubeName");
             }
 
             entries.add(createInstance(type, channelId, youtubeName, subreddits,
-                    postDescription));
+                    postDescription, pollerInterval));
         }
     }
 
     @VisibleForTesting
     public Instance createInstance(String type, String youtubeFeed, String youtubeName, List<String> subreddits,
-                                   boolean postDescription) {
-        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription);
+                                   boolean postDescription, double pollerInterval) {
+        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription, pollerInterval);
     }
 
     public List<Instance> getEntries() {

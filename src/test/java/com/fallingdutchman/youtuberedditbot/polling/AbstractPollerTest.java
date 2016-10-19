@@ -30,8 +30,8 @@ public class AbstractPollerTest {
                 "fake",
                 "fake",
                 Lists.asList("fake", new String[0]),
-                false
-        ), authenticator);
+                false,
+                pollerInterval), authenticator);
 
         poller = new AbstractPoller(listener) {
             @Override

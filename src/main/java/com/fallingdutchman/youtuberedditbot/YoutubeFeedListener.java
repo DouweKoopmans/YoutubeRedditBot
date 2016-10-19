@@ -75,7 +75,8 @@ public final class YoutubeFeedListener implements FeedListener {
                 final Optional<YoutubeVideo> youtubeVideo = this.find(feed.get().getEntries().get(0));
                 if (youtubeVideo.isPresent()) {
                     this.setLatestVideo(youtubeVideo.get().getPublishDate());
-                    timer.schedule(getPoller(), 0, 30000);
+                    final long period = (long) (instance.getPollerInterval() * 60);
+                    timer.schedule(getPoller(), 0, period * 1000);
                 } else {
                     log.warn("an error occurred whilst trying to start the listener, will not start" +
                             " following listener {}", this);

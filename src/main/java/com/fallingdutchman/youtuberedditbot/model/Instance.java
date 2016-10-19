@@ -17,13 +17,17 @@ public final class Instance {
     private final String channelId;
     private final List<String> subreddits;
     private final boolean postDescription;
+    private final double pollerInterval;
 
     public Instance(String type, String channelId, String youtubeName, List<String> subreddits,
-                    boolean postDescription) {
+                    boolean postDescription, double pollerInterval) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(channelId);
         Preconditions.checkNotNull(subreddits);
         Preconditions.checkArgument(!subreddits.isEmpty());
+        Preconditions.checkArgument(pollerInterval >= 0.5);
+
+        this.pollerInterval = pollerInterval;
         this.type = type;
         this.channelId = channelId;
         this.youtubeName = youtubeName;
