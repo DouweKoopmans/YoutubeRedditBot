@@ -17,7 +17,7 @@ public class Formatter {
     public String format(final Map<String, String> values) {
         StrSubstitutor sub = new StrSubstitutor(values);
         String comment = sub.replace(template);
-        comment = comment.replaceAll("\n", "\n  ");
+        comment = comment.replaceAll("\n", "  \n");
 
         return comment;
     }
