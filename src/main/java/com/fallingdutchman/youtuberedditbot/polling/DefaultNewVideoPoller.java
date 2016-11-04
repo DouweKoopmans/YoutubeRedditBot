@@ -1,11 +1,8 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeFeedListener;
 import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
-import com.rometools.rome.feed.synd.SyndEntry;
+import com.fallingdutchman.youtuberedditbot.listeners.AbstractYoutubeListener;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 /**
  * Created by Douwe Koopmans on 10-1-16.
@@ -13,7 +10,7 @@ import java.util.Optional;
 @Slf4j
 public class DefaultNewVideoPoller extends AbstractPoller {
 
-    public DefaultNewVideoPoller(YoutubeFeedListener listener) {
+    public DefaultNewVideoPoller(AbstractYoutubeListener listener) {
         super(listener);
     }
 
@@ -26,17 +23,10 @@ public class DefaultNewVideoPoller extends AbstractPoller {
         //object stored in the listener is set to the newest and not the oldest video
         for (int i = entries - 1; i >= 0; i--) {
             log.trace("{} th iteration of poller", i);
-            SyndEntry entry = listener.getFeedEntries().get(i);
-            log.trace("entry for iteration {}:", i);
-            log.trace(entry.toString());
-            final Optional<YoutubeVideo> video = listener.find(entry);
-            if (video.isPresent()) {
-                log.trace("video found for iteration {}:", i);
-                log.trace(video.get().toString());
-                this.listener.newVideoPosted(video.get());
-            } else {
-                log.error("was unable to extract video from rss feed, feed might have been malformed in some way");
-            }
+            YoutubeVideo video = listener.getVideos().get(i);
+            log.trace("video found for iteration {}:", i);
+            log.trace(video.toString());
+            this.listener.newVideoPosted(video);
         }
     }
 }

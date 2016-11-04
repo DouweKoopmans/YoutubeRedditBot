@@ -43,36 +43,56 @@ public class ConfigHandler {
 
             Config instance = object.toConfig();
 
-            String type;
+            String pollerType;
             String channelId;
             String youtubeName = null;
             List<String> subreddits;
             boolean postDescription;
             double pollerInterval;
+            String youtubeApiKey = null;
+            String listenerType;
 
-            type = instance.getString("type");
-            channelId = instance.getString("channelId");
+            if (instance.hasPath("listener-type")) {
+                listenerType = instance.getString("listener-type");
+            } else {
+                listenerType = "rss";
+            }
+
+            if (instance.hasPath("poller-type")) {
+                pollerType = instance.getString("poller-type");
+            } else {
+                pollerType = "new-video";
+            }
+
+            postDescription = instance.hasPath("post-description") && instance.getBoolean("post-description");
+
+            channelId = instance.getString("channel-id");
             subreddits = instance.getStringList("subreddit");
-            postDescription = instance.getBoolean("postDescription");
-            pollerInterval = instance.getDouble("interval");
 
-            if (pollerInterval < 0.5F) {
+            if (instance.hasPath("interval")) {
+                pollerInterval = instance.getDouble("interval");
+            } else {
                 pollerInterval = 0.5F;
             }
 
-            if ("descriptionListener".equals(type)) {
+            if ("api".equals(listenerType)) {
+                youtubeApiKey = instance.getString("youtube_api_key");
+            }
+
+            if ("descriptionListener".equals(pollerType)) {
                 youtubeName = instance.getString("youtubeName");
             }
 
-            entries.add(createInstance(type, channelId, youtubeName, subreddits,
-                    postDescription, pollerInterval));
+            entries.add(createInstance(pollerType, channelId, youtubeName, subreddits,
+                    postDescription, pollerInterval, youtubeApiKey, listenerType));
         }
     }
 
     @VisibleForTesting
     public Instance createInstance(String type, String youtubeFeed, String youtubeName, List<String> subreddits,
-                                   boolean postDescription, double pollerInterval) {
-        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription, pollerInterval);
+                                   boolean postDescription, double pollerInterval, String apikey, String listenerType) {
+        return new Instance(type, youtubeFeed, youtubeName, subreddits, postDescription, pollerInterval, apikey,
+                listenerType);
     }
 
     public List<Instance> getEntries() {
