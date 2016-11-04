@@ -1,5 +1,6 @@
 package com.fallingdutchman.youtuberedditbot;
 
+import com.fallingdutchman.youtuberedditbot.listeners.FeedListener;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;

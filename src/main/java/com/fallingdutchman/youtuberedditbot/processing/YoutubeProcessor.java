@@ -53,7 +53,6 @@ public final class YoutubeProcessor {
     public synchronized Optional<String> postComment(Submission submission, String formatName) {
         final HashMap<String, String> values = Maps.newHashMap();
         values.put("title", video.getVideoTitle());
-        values.put("channelId", video.getChannelId());
         values.put("publishDate", video.getPublishDate().toString());
         values.put("videoId", video.getVideoId());
         values.put("description", video.getDescription());
