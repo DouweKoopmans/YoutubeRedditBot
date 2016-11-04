@@ -49,10 +49,10 @@ public class RedditManager {
      * @throws NetworkException when the request was not successful
      */
     public void authenticate(RedditCredentials redditCredentials) {
-        log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUserName());
         if (!shouldAuth) {
             return;
         }
+        log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUserName());
         final Credentials credentials = Credentials.script(redditCredentials.getRedditUserName(),
                 redditCredentials.getRedditPassword(), redditCredentials.getRedditClientId(),
                 redditCredentials.getRedditOauthSecret());
