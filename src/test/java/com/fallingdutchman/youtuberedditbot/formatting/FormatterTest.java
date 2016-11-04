@@ -30,9 +30,9 @@ public class FormatterTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                        {"${test}", "foo bar\n", "foo bar\n  "},
-                        {"***\n${test}\n***", "foo bar", "***\n  foo bar\n  ***"},
-                        {"***\n\n***", "foo bar", "***\n  \n  ***"},
+                        {"${test}", "foo bar\n", "foo bar  \n"},
+                        {"***\n${test}\n***", "foo bar", "***  \nfoo bar  \n***"},
+                        {"***\n\n***", "foo bar", "***  \n  \n***"},
                         {"***foo***", "bar", "***foo***"}
                 }
         );
