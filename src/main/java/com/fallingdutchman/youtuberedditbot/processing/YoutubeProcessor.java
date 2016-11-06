@@ -29,22 +29,20 @@ public final class YoutubeProcessor {
     @NonNull RedditManager reddit;
     @NonNull FormatterFactory formatterFactory = new FileFormatterFactory();
 
-    public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost, Runnable listener) {
+    public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost, Runnable reauthenticate) {
         if (selfPost) {
             throw new UnsupportedOperationException("don't support self posts");
         } else {
             try {
-                return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
-            } catch (NetworkException e) {
-                log.error("post attempt was unsuccessful", e);
-                log.warn("attempting reauthentication");
-                listener.run();
-                try {
-                    return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
-                } catch (NetworkException ex) {
-                    log.error("reauthentication attempt failed", ex);
-                    return Optional.empty();
+                if (!reddit.isAuthenticated()) {
+                    log.warn("reauthenticating before attempting to submit post");
+                    reauthenticate.run();
                 }
+                return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
+
+            } catch (NetworkException e) {
+                log.error("unable to submit post", e);
+                return Optional.empty();
             }
         }
     }
