@@ -4,6 +4,7 @@ import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.formatting.FileFormatterFactory;
 import com.fallingdutchman.youtuberedditbot.formatting.Formatter;
 import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;
+import com.fallingdutchman.youtuberedditbot.model.CommentRule;
 import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.common.collect.Maps;
 import lombok.AccessLevel;
@@ -16,6 +17,7 @@ import net.dean.jraw.models.Submission;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,6 +29,7 @@ import java.util.Optional;
 public final class YoutubeProcessor {
     @NonNull YoutubeVideo video;
     @NonNull RedditManager reddit;
+    @NonNull List<CommentRule> commentRules;
     @NonNull FormatterFactory formatterFactory = new FileFormatterFactory();
 
     public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost, Runnable reauthenticate) {
@@ -52,7 +55,11 @@ public final class YoutubeProcessor {
         values.put("title", video.getVideoTitle());
         values.put("publishDate", video.getPublishDate().toString());
         values.put("videoId", video.getVideoId());
-        values.put("description", video.getDescription());
+        String description = video.getDescription();
+        for (CommentRule commentRule : commentRules) {
+            description = description.replaceAll(commentRule.getFind(), commentRule.getReplace());
+        }
+        values.put("description", description);
 
         final Formatter formatter;
         try {

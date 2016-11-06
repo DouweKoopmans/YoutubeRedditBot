@@ -18,4 +18,6 @@ public final class Instance {
     @NonNull double pollerInterval;
     String apiKey;
     @NonNull String listenerType;
+    @NonNull List<CommentRule> commentRules;
+    String commentFormatPath;
 }

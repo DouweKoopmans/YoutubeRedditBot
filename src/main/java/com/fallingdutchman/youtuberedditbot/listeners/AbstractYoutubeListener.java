@@ -13,12 +13,10 @@ import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import net.dean.jraw.models.Submission;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Timer;
 import java.util.function.Consumer;
 
@@ -72,7 +70,7 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     public void newVideoPosted(@NonNull final YoutubeVideo video) {
         log.info("found a new video, \n {}", video.toString());
         this.setLatestVideo(video.getPublishDate());
-        YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
+        YoutubeProcessor processor = new YoutubeProcessor(video, authenticator, instance.getCommentRules());
 
         log.info("processing video, id=\"{}\"", video.getVideoId());
         getInstance().getSubreddits().forEach(processVideo(processor));
@@ -94,7 +92,7 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     }
 
     @Override
-    public void setLatestVideo(LocalDateTime date) {
+    public void setLatestVideo(@NonNull final LocalDateTime date) {
         this.latestVideo = date;
         log.debug("setting latest video date of {} to {}", this.instance.getChannelId(), date);
     }
@@ -103,10 +101,10 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     private Consumer<String> processVideo(@NonNull final YoutubeProcessor processor) {
         return subreddit -> {
             log.debug("processing new video for /r/{}", subreddit);
-            final Optional<Submission> submission = processor.postVideo(subreddit, false,
+            val submission = processor.postVideo(subreddit, false,
                     () -> this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials()));
             if (submission.isPresent() && instance.isPostComment()) {
-                processor.postComment(submission.get(), "description");
+                processor.postComment(submission.get(), instance.getCommentFormatPath());
             }
         };
     }
