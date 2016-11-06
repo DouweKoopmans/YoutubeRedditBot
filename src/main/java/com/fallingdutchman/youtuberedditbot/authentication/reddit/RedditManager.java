@@ -70,10 +70,6 @@ public class RedditManager {
         }
     }
 
-    public boolean isAuthenticated() {
-        return reddit.isAuthenticated();
-    }
-
     /**
      * submit a link post
      */
