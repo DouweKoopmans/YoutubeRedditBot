@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO" shutdownHook="disable">
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
+        <Console name="Console-std-out" target="SYSTEM_OUT">
             <PatternLayout pattern="%highlight{${date:MM/dd} %d{HH:mm:ss} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
+        </Console>
+        <Console name="Console-std-err" target="SYSTEM_ERR">
+            <PatternLayout pattern="%highlight{${date:MM/dd} %d{HH:mm:ss} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
+            <Filters>
+                <ThresholdFilter level="WARN" onMatch="ACCEPT" />
+            </Filters>
         </Console>
         <File name="file" fileName="data/log/app_${date:yyyy-MM-dd}.log">
             <PatternLayout pattern="${date:MM/dd} %d{HH:mm:ss} %c{1} [%t] %-5level - %msg%n"/>
@@ -10,7 +16,8 @@
     </Appenders>
     <Loggers>
         <Root level="trace">
-            <AppenderRef ref="Console" level="DEBUG"/>
+            <AppenderRef ref="Console-std-out" level="DEBUG"/>
+            <AppenderRef ref="Console-std-err" level="WARN"/>
             <AppenderRef ref="file" level="INFO"/>
         </Root>
     </Loggers>
