@@ -70,7 +70,8 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
                         .setPlaylistId(uploadPlaylistId)
                         .setFields(
                                 "items(snippet/publishedAt, snippet/title, snippet/description," +
-                                        " snippet/resourceId/videoId)");
+                                        " snippet/resourceId/videoId)")
+                        .setMaxResults(15L);
                 playlistItemRequest.setKey(getInstance().getApiKey());
                 result.addAll(playlistItemRequest.execute().getItems());
             }
