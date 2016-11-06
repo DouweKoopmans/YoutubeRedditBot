@@ -43,10 +43,6 @@ public abstract class AbstractPoller extends TimerTask{
     public final void run() {
         val startTime = System.currentTimeMillis();
         if (listener.update()) {
-            val latestVideo = listener.getVideos().get(0);
-
-            log.debug("latest entry: {id={}, date={}}", latestVideo.getVideoId(), latestVideo.getPublishDate());
-
             val entries = scanForNewEntries(listener.getVideos());
 
             if (entries > 0) {
@@ -59,7 +55,9 @@ public abstract class AbstractPoller extends TimerTask{
             log.warn("something went wrong updating the feed, will not run poller");
         }
 
-        log.debug("finished polling in {} milliseconds", System.currentTimeMillis() - startTime);
+        val latestVideo = listener.getVideos().get(0);
+        log.debug("finished polling in {} milliseconds. latest entry:  {id={}, date={}}",
+                System.currentTimeMillis() - startTime, latestVideo.getVideoId(), latestVideo.getPublishDate());
     }
 
     protected abstract void runPoller(int entries);
