@@ -47,7 +47,7 @@ public final class YoutubeProcessor {
         }
     }
 
-    public synchronized Optional<String> postComment(Submission submission, String formatName) {
+    public synchronized Optional<String> postComment(Submission submission, String formatPath) {
         final HashMap<String, String> values = Maps.newHashMap();
         values.put("title", video.getVideoTitle());
         values.put("publishDate", video.getPublishDate().toString());
@@ -56,9 +56,9 @@ public final class YoutubeProcessor {
 
         final Formatter formatter;
         try {
-            formatter = formatterFactory.createFormatterFromName(formatName);
+            formatter = formatterFactory.createFormatterFromPath(formatPath);
         } catch (IOException e) {
-            log.error("was unable to create Formatter from {}", formatName, e);
+            log.error("was unable to create Formatter from {}", formatPath, e);
             return Optional.empty();
         }
 

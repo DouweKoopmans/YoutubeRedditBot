@@ -7,7 +7,7 @@ import java.io.IOException;
  * Created by douwe on 3-10-16.
  */
 public interface FormatterFactory {
-    Formatter createFormatterFromName(final String name) throws IOException;
+    Formatter createFormatterFromPath(final String path) throws IOException;
 
     Formatter createFormatterFromFile(final File file) throws IOException;
 }

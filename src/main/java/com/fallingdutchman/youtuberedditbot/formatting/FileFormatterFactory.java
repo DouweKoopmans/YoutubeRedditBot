@@ -21,8 +21,8 @@ public class FileFormatterFactory implements FormatterFactory{
     private static final String FORMAT_EXTENTION = "md";
 
     @Override
-    public Formatter createFormatterFromName(final String name) throws IOException {
-        val strings = joinStrings(Files.readAllLines(Paths.get(generateFileLocation(name))));
+    public Formatter createFormatterFromPath(final String path) throws IOException {
+        val strings = joinStrings(Files.readAllLines(Paths.get(generateFileLocation(path))));
 
         return new Formatter(strings);
     }
@@ -32,13 +32,13 @@ public class FileFormatterFactory implements FormatterFactory{
         return new Formatter(joinStrings(Files.readAllLines(Paths.get(file.toURI()))));
     }
 
-    static String generateFileLocation(final String name) throws FileNotFoundException {
-        Preconditions.checkNotNull(name, "file name can't be null");
-        Preconditions.checkArgument(!name.isEmpty(), "file name can't be empty");
-        Preconditions.checkArgument(!name.endsWith("."));
-        Preconditions.checkArgument(!name.startsWith("."));
+    static String generateFileLocation(final String path) throws FileNotFoundException {
+        Preconditions.checkNotNull(path, "file path can't be null");
+        Preconditions.checkArgument(!path.isEmpty(), "file path can't be empty");
+        Preconditions.checkArgument(!path.endsWith("."));
+        Preconditions.checkArgument(!path.startsWith("."));
 
-        return YrbUtils.LOCAL_HOST_FOLDER + FORMAT_FOLDER + "/" + name.replaceAll("/", "").toLowerCase(Locale.UK) +
+        return YrbUtils.LOCAL_HOST_FOLDER + FORMAT_FOLDER + "/" + path.replaceAll("/", "").toLowerCase(Locale.UK) +
                 '.' + FORMAT_EXTENTION;
     }
 
