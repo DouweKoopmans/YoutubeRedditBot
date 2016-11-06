@@ -1,11 +1,15 @@
 package com.fallingdutchman.youtuberedditbot.processing;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.formatting.FileFormatterFactory;
 import com.fallingdutchman.youtuberedditbot.formatting.Formatter;
 import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.common.collect.Maps;
+import lombok.AccessLevel;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Submission;
@@ -18,17 +22,12 @@ import java.util.Optional;
  * Created by douwe on 2-10-16.
  */
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public final class YoutubeProcessor {
-    private final YoutubeVideo video;
-    private final RedditManager reddit;
-
-    private FormatterFactory formatterFactory;
-
-    public YoutubeProcessor(YoutubeVideo video, RedditManager reddit) {
-        this.video = video;
-        this.reddit = reddit;
-        this.formatterFactory = new FileFormatterFactory();
-    }
+    @NonNull YoutubeVideo video;
+    @NonNull RedditManager reddit;
+    @NonNull FormatterFactory formatterFactory = new FileFormatterFactory();
 
     public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost, Runnable listener) {
         if (selfPost) {

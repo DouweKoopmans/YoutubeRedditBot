@@ -1,6 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.listeners.AbstractYoutubeListener;
 import lombok.extern.slf4j.Slf4j;
 

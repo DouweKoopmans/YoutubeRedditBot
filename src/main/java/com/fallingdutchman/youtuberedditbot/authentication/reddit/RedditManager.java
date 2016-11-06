@@ -4,12 +4,12 @@ import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.dean.jraw.ApiException;
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.UserAgent;
 import net.dean.jraw.http.oauth.Credentials;
-import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthException;
 import net.dean.jraw.managers.AccountManager;
 import net.dean.jraw.models.Submission;
@@ -48,16 +48,16 @@ public class RedditManager {
      *
      * @throws NetworkException when the request was not successful
      */
-    public void authenticate(RedditCredentials redditCredentials) {
+    public void authenticate(final RedditCredentials redditCredentials) {
         if (!shouldAuth) {
             return;
         }
         log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUserName());
-        final Credentials credentials = Credentials.script(redditCredentials.getRedditUserName(),
+        val credentials = Credentials.script(redditCredentials.getRedditUserName(),
                 redditCredentials.getRedditPassword(), redditCredentials.getRedditClientId(),
                 redditCredentials.getRedditOauthSecret());
         try {
-            final OAuthData authData = reddit.getOAuthHelper().easyAuth(credentials);
+            val authData = reddit.getOAuthHelper().easyAuth(credentials);
             reddit.authenticate(authData);
             log.info("successfully authenticated {} for the reddit API",
                     redditCredentials.getRedditUserName());
@@ -77,7 +77,7 @@ public class RedditManager {
         try {
             log.debug("attempting to submit new post to /r/{}, submission title {}, target url {}",
                     subreddit, title, url.toExternalForm());
-            final Submission submission = submitPost(new AccountManager.SubmissionBuilder(url, subreddit, title)
+            val submission = submitPost(new AccountManager.SubmissionBuilder(url, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
             log.info("submitted url to /r/{}, submission id: {}", submission.getSubredditName(),
@@ -95,7 +95,7 @@ public class RedditManager {
         try {
             log.debug("attempting to submit new self post to /r/{}, submission title {}, body {}",
                     subreddit, title, text);
-            final Submission submission = submitPost(new AccountManager.SubmissionBuilder(text, subreddit, title)
+            val submission = submitPost(new AccountManager.SubmissionBuilder(text, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
             log.info("submitted self post to /r/{}, submission id: {}", submission.getSubredditName(),
@@ -121,7 +121,7 @@ public class RedditManager {
      */
     public Optional<String> submitComment(String text,Submission submission) {
         try {
-            final String commentId = accountManager.reply(submission, text);
+            val commentId = accountManager.reply(submission, text);
             log.info("posted comment to {} on /r/{}, with comment id {}", submission.getId(),
                     submission.getSubredditName(), commentId);
 

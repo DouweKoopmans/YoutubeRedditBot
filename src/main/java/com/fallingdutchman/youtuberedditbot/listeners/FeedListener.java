@@ -1,6 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.polling.AbstractPoller;
 

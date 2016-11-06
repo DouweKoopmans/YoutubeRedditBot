@@ -1,9 +1,9 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
-import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.listeners.YoutubeRssFeedListener;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,13 +23,13 @@ public class AbstractPollerTest {
     public void setUp() throws Exception {
         RedditManager authenticator = new RedditManager("fake");
         authenticator.shouldAuth = false;
-        YoutubeRssFeedListener listener = YoutubeRssFeedListener.of(ConfigHandler.getInstance().createInstance(
+        YoutubeRssFeedListener listener = new YoutubeRssFeedListener(authenticator, new Instance(
                 "fake",
                 "fake",
                 "fake",
                 Lists.asList("fake", new String[0]),
                 false,
-                1, "", ""), authenticator);
+                1, "", "", Lists.newArrayList(), ""));
 
         poller = new AbstractPoller(listener) {
             @Override

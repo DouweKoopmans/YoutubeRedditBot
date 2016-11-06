@@ -1,9 +1,10 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.listeners.FeedListener;
-import com.google.common.base.Preconditions;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.util.regex.Pattern;
 
@@ -32,16 +33,14 @@ public class DescriptionListenerPoller extends AbstractPoller {
 
     /**
      * checks if the provided description of a video contains a link to our youtuber
+     *
      * @param description the description we need to search
-     * @param targetName the name of the youtuber we want to extract
-     * @param targetId the channel id of the youtuber we want to extract
+     * @param targetName  the name of the youtuber we want to extract
+     * @param targetId    the channel id of the youtuber we want to extract
      * @return whether a link to the youtuber is present in the description
      */
-    static boolean checkEntry(String description, String targetName, String targetId) {
-        Preconditions.checkNotNull(description);
-
-        final Pattern regex = Pattern.compile(
-                String.format("https?://www\\.youtube\\.com/((user/)?%s|channel/%s)", targetName,
+    static boolean checkEntry(@NonNull String description, String targetName, String targetId) {
+        val regex = Pattern.compile(String.format("https?://www\\.youtube\\.com/((user/)?%s|channel/%s)", targetName,
                         targetId), Pattern.UNIX_LINES | Pattern.MULTILINE);
 
         return regex.matcher(description).find();

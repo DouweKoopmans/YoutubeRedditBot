@@ -1,8 +1,10 @@
 package com.fallingdutchman.youtuberedditbot;
 
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.api.client.util.DateTime;
+import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
-import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -13,10 +15,9 @@ import java.util.Optional;
 /**
  * Created by Douwe Koopmans on 22-1-16.
  */
+@UtilityClass
 public final class YrbUtils {
     public static final String LOCAL_HOST_FOLDER = "data/";
-
-    private YrbUtils(){}
 
     public static LocalDateTime dateToLocalDateTime(Date date) {
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
@@ -30,8 +31,8 @@ public final class YrbUtils {
         return Date.from(date.atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    @Nonnull
-    public static Comparator<Optional<YoutubeVideo>> getOptionalComparator() {
+    @NonNull
+    public static Comparator<Optional<YoutubeVideo>> getOptionalVideoComparator() {
         return (o1, o2) -> {
             if (!o1.isPresent() && !o2.isPresent()) {
                 return 0;

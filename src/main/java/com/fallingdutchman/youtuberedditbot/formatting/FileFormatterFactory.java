@@ -3,6 +3,7 @@ package com.fallingdutchman.youtuberedditbot.formatting;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import lombok.val;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,7 +22,7 @@ public class FileFormatterFactory implements FormatterFactory{
 
     @Override
     public Formatter createFormatterFromName(final String name) throws IOException {
-        final String strings = joinStrings(Files.readAllLines(Paths.get(generateFileLocation(name))));
+        val strings = joinStrings(Files.readAllLines(Paths.get(generateFileLocation(name))));
 
         return new Formatter(strings);
     }

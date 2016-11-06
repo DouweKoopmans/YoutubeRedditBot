@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
+import lombok.val;
 
 import java.io.File;
 import java.util.List;
@@ -31,7 +32,7 @@ public class ConfigHandler {
     }
 
     public void load(){
-        Config rcConfig = conf.getObject("redditCredentials").toConfig();
+        val rcConfig = conf.getObject("redditCredentials").toConfig();
         redditCredentials = new RedditCredentials(
                 rcConfig.getString("redditClientId"),
                 rcConfig.getString("redditOauthSecret"),

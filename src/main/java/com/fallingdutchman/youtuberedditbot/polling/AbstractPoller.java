@@ -1,9 +1,11 @@
 package com.fallingdutchman.youtuberedditbot.polling;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.listeners.FeedListener;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.common.annotations.VisibleForTesting;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.util.List;
 import java.util.TimerTask;
@@ -13,9 +15,9 @@ import java.util.TimerTask;
  */
 @Slf4j
 public abstract class AbstractPoller extends TimerTask{
-    protected final FeedListener<?> listener;
+    final FeedListener<?> listener;
 
-    protected AbstractPoller(FeedListener listener) {
+    AbstractPoller(@NonNull FeedListener listener) {
         this.listener = listener;
     }
 
@@ -25,7 +27,7 @@ public abstract class AbstractPoller extends TimerTask{
      * @return the number of new entries
      */
     @VisibleForTesting
-    int scanForNewEntries(List<YoutubeVideo> entries) {
+    int scanForNewEntries(@NonNull List<YoutubeVideo> entries) {
         int i = 0;
         for (YoutubeVideo entry : entries) {
             if (entry.getPublishDate().isEqual(listener.getLatestVideo())) {
@@ -39,13 +41,13 @@ public abstract class AbstractPoller extends TimerTask{
 
     @Override
     public final void run() {
-        final long startTime = System.currentTimeMillis();
+        val startTime = System.currentTimeMillis();
         if (listener.update()) {
-            final YoutubeVideo latestVideo = listener.getVideos().get(0);
+            val latestVideo = listener.getVideos().get(0);
 
             log.debug("latest entry: {id={}, date={}}", latestVideo.getVideoId(), latestVideo.getPublishDate());
 
-            final int entries = scanForNewEntries(listener.getVideos());
+            val entries = scanForNewEntries(listener.getVideos());
 
             if (entries > 0) {
                 log.debug("poller for {} has found {} new videos", listener.getInstance().getChannelId(),

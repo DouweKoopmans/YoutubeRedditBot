@@ -1,9 +1,9 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.common.collect.ImmutableList;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
@@ -11,15 +11,16 @@ import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.jdom2.Content;
 import org.jdom2.Element;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -35,17 +36,13 @@ import java.util.stream.Collectors;
 public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEntry> {
     private final AtomicReference<SyndFeed> feed = new AtomicReference<>();
 
-    private YoutubeRssFeedListener(RedditManager authenticator, Instance instance) throws IOException {
+    public YoutubeRssFeedListener(RedditManager authenticator, Instance instance) throws IOException {
        super(authenticator, instance);
-    }
-
-    public static YoutubeRssFeedListener of(Instance instance, RedditManager authenticator) throws IOException {
-        return new YoutubeRssFeedListener(authenticator, instance);
     }
 
     @Override
     boolean onListen() {
-        final Optional<YoutubeVideo> youtubeVideo = this.extract(feed.get().getEntries().get(0));
+        val youtubeVideo = this.extract(feed.get().getEntries().get(0));
         if (youtubeVideo.isPresent()) {
             this.setLatestVideo(youtubeVideo.get().getPublishDate());
             return true;
@@ -56,7 +53,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
         }
     }
 
-    public Optional<YoutubeVideo> extract(SyndEntry entry) {
+    public Optional<YoutubeVideo> extract(@NonNull final SyndEntry entry) {
         URL url;
         try {
             url = new URL(entry.getLink());
@@ -66,7 +63,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
         }
         String videoId;
         String description = "";
-        final LocalDateTime publishDate = YrbUtils.dateToLocalDateTime(entry.getPublishedDate());
+        val publishDate = YrbUtils.dateToLocalDateTime(entry.getPublishedDate());
 
         // get the video id
         Optional<Element> optionalVideoId = entry.getForeignMarkup().stream()
@@ -81,7 +78,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
         }
 
         // extract description
-        final Optional<String> des = entry.getForeignMarkup().stream()
+        val des = entry.getForeignMarkup().stream()
                 .filter(element -> "media".equals(element.getNamespacePrefix()) && "group".equals(element.getName()))
                 .map(Element::getContent)
                 .flatMap(Collection::stream)
@@ -97,7 +94,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             description = des.get();
         }
 
-        return Optional.of(new YoutubeVideo(entry.getTitle(), videoId, url, description, publishDate));
+        return Optional.of(new YoutubeVideo(entry.getTitle(), videoId, url, publishDate, description));
     }
 
     @Override
@@ -109,8 +106,8 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             log.error("was unable to parse feed", e);
             return false;
         } catch (MalformedURLException e) {
-            log.error("youtube feed URL is malformed, please check the configurations " +
-                    "for channel-id {}", getInstance().getChannelId(), e);
+            log.error("youtube feed URL is malformed, please check the configurations for channel-id {}",
+                    getInstance().getChannelId(), e);
             return false;
         } catch (IOException e) {
             log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
@@ -124,7 +121,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
         return ImmutableList.copyOf(getFeed().getEntries()
                 .stream()
                 .map(syndEntry -> {
-                    final Optional<YoutubeVideo> video = extract(syndEntry);
+                    val video = extract(syndEntry);
                     if (video.isPresent()) {
                         return video.get();
                     } else {

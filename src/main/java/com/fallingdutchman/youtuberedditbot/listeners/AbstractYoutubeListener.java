@@ -1,17 +1,18 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.polling.AbstractPoller;
 import com.fallingdutchman.youtuberedditbot.polling.DefaultNewVideoPoller;
 import com.fallingdutchman.youtuberedditbot.polling.DescriptionListenerPoller;
 import com.fallingdutchman.youtuberedditbot.processing.YoutubeProcessor;
-import com.google.common.base.Preconditions;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.dean.jraw.models.Submission;
 
 import javax.annotation.Nonnull;
@@ -28,16 +29,13 @@ import java.util.function.Consumer;
 @ToString(exclude = {"timer", "authenticator", "poller"}, doNotUseGetters = true)
 @EqualsAndHashCode(exclude = "timer")
 public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
-    private final RedditManager authenticator;
-    private final Instance instance;
-    private final AbstractPoller poller;
+    @NonNull private final RedditManager authenticator;
+    @NonNull private final Instance instance;
+    @NonNull private final AbstractPoller poller;
     private LocalDateTime latestVideo = LocalDateTime.now();
     private Timer timer;
 
-    AbstractYoutubeListener(RedditManager authenticator, Instance instance) throws IOException {
-        Preconditions.checkNotNull(authenticator);
-        Preconditions.checkNotNull(instance);
-
+    AbstractYoutubeListener(@NonNull RedditManager authenticator,@NonNull Instance instance) throws IOException {
         this.authenticator = authenticator;
         this.instance = instance;
         this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials());
@@ -52,7 +50,7 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
 
         try {
             if (update() && onListen()) {
-                final long period = (long) (getInstance().getPollerInterval() * 60);
+                val period = (long) (getInstance().getPollerInterval() * 60);
                 timer.schedule(getPoller(), 0, period * 1000);
             } else {
                 log.warn("was unable to initiate the feed will not start the poller for {}", this.toString());
@@ -71,7 +69,7 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     }
 
     @Override
-    public void newVideoPosted(YoutubeVideo video) {
+    public void newVideoPosted(@NonNull final YoutubeVideo video) {
         log.info("found a new video, \n {}", video.toString());
         this.setLatestVideo(video.getPublishDate());
         YoutubeProcessor processor = new YoutubeProcessor(video, authenticator);
@@ -102,12 +100,12 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     }
 
     @Nonnull
-    private Consumer<String> processVideo(YoutubeProcessor processor) {
+    private Consumer<String> processVideo(@NonNull final YoutubeProcessor processor) {
         return subreddit -> {
             log.debug("processing new video for /r/{}", subreddit);
             final Optional<Submission> submission = processor.postVideo(subreddit, false,
                     () -> this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials()));
-            if (submission.isPresent() && instance.isPostDescription()) {
+            if (submission.isPresent() && instance.isPostComment()) {
                 processor.postComment(submission.get(), "description");
             }
         };

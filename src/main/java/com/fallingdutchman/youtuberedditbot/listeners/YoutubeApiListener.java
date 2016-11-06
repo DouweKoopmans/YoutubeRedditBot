@@ -1,9 +1,9 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
-import com.fallingdutchman.youtuberedditbot.YoutubeVideo;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Lists;
@@ -13,14 +13,17 @@ import com.google.api.services.youtube.model.ChannelListResponse;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,9 +33,10 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @EqualsAndHashCode(callSuper = true, doNotUseGetters = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
-    private final YouTube youtube;
-    private final List<Optional<YoutubeVideo>> videos = Lists.newArrayList();
+    YouTube youtube;
+    List<Optional<YoutubeVideo>> videos = Lists.newArrayList();
 
     public YoutubeApiListener(RedditManager authenticator, Instance instance) throws IOException,
             GeneralSecurityException {
@@ -59,9 +63,9 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
             List<Channel> channelsList = channelResult.getItems();
 
             if (channelsList != null && !channelsList.isEmpty()) {
-                String uploadPlaylistId = channelsList.get(0).getContentDetails().getRelatedPlaylists().getUploads();
+                val uploadPlaylistId = channelsList.get(0).getContentDetails().getRelatedPlaylists().getUploads();
 
-                YouTube.PlaylistItems.List playlistItemRequest = youtube.playlistItems().list("snippet");
+                val playlistItemRequest = youtube.playlistItems().list("snippet");
                 playlistItemRequest
                         .setPlaylistId(uploadPlaylistId)
                         .setFields(
@@ -78,7 +82,7 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
         videos.clear();
         videos.addAll(result.stream()
                 .map(this::extract)
-                .sorted(YrbUtils.getOptionalComparator())
+                .sorted(YrbUtils.getOptionalVideoComparator())
                 .collect(Collectors.toList()));
         return true;
     }
@@ -98,9 +102,7 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
     }
 
     @Override
-    public Optional<YoutubeVideo> extract(PlaylistItem target) {
-        LocalDateTime publishDate = YrbUtils.dateTimeToLocalDateTime(target.getSnippet().getPublishedAt());
-
+    public Optional<YoutubeVideo> extract(@NonNull final PlaylistItem target) {
         URL url;
         try {
             url = new URL("https://www.youtube.com/watch?v=" + target.getSnippet().getResourceId().getVideoId());
@@ -109,16 +111,17 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
             return Optional.empty();
         }
 
-        String description = target.getSnippet().getDescription();
-        String videoId = target.getSnippet().getResourceId().getVideoId();
-        String videoTitle = target.getSnippet().getTitle();
+        val description = target.getSnippet().getDescription();
+        val videoId = target.getSnippet().getResourceId().getVideoId();
+        val videoTitle = target.getSnippet().getTitle();
+        val publishDate = YrbUtils.dateTimeToLocalDateTime(target.getSnippet().getPublishedAt());
 
-        return Optional.of(new YoutubeVideo(videoTitle, videoId, url, description, publishDate));
+        return Optional.of(new YoutubeVideo(videoTitle, videoId, url, publishDate, description));
     }
 
     @Override
     boolean onListen() {
-        final YoutubeVideo youtubeVideo = getVideos().get(0);
+        val youtubeVideo = getVideos().get(0);
         this.setLatestVideo(youtubeVideo.getPublishDate());
 
         return true;
