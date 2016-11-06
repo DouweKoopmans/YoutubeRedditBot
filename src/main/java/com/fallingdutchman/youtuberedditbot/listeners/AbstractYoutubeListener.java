@@ -13,10 +13,12 @@ import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.dean.jraw.models.Submission;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.function.Consumer;
 
@@ -101,7 +103,7 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     private Consumer<String> processVideo(@NonNull final YoutubeProcessor processor) {
         return subreddit -> {
             log.debug("processing new video for /r/{}", subreddit);
-            val submission = processor.postVideo(subreddit, false,
+            Optional<Submission> submission = processor.postVideo(subreddit, false,
                     () -> this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials()));
             if (submission.isPresent() && instance.isPostComment()) {
                 processor.postComment(submission.get(), instance.getCommentFormatPath());

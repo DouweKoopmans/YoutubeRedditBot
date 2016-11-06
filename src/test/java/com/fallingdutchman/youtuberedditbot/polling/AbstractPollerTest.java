@@ -43,15 +43,15 @@ public class AbstractPollerTest {
     public void testScanForNewEntries() throws Exception {
         LocalDateTime future = LocalDateTime.now().plusMinutes(2);
 
-        YoutubeVideo entry1 = new YoutubeVideo("", "", null, "", future);
-        YoutubeVideo entry2 = new YoutubeVideo("", "", null, "", LocalDateTime.now().minusMinutes(2));
+        YoutubeVideo entry1 = new YoutubeVideo("", "", null, future, "");
+        YoutubeVideo entry2 = new YoutubeVideo("", "", null, LocalDateTime.now().minusMinutes(2), "");
 
         List<YoutubeVideo> entries = Lists.newArrayList(entry1, entry2);
 
         assertEquals(1, poller.scanForNewEntries(entries));
 
         entries.remove(entry1);
-        entry1 = new YoutubeVideo("", "", null, "", LocalDateTime.now().minusMinutes(2));
+        entry1 = new YoutubeVideo("", "", null, LocalDateTime.now().minusMinutes(2), "");
         entries.add(entry1);
 
         assertEquals(0, poller.scanForNewEntries(entries));

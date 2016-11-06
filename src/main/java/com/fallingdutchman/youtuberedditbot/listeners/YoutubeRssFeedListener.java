@@ -121,7 +121,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
         return ImmutableList.copyOf(getFeed().getEntries()
                 .stream()
                 .map(syndEntry -> {
-                    val video = extract(syndEntry);
+                    Optional<YoutubeVideo> video = extract(syndEntry);
                     if (video.isPresent()) {
                         return video.get();
                     } else {

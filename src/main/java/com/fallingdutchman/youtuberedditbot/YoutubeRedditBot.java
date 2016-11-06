@@ -7,7 +7,6 @@ import com.fallingdutchman.youtuberedditbot.listeners.YoutubeApiListener;
 import com.fallingdutchman.youtuberedditbot.listeners.YoutubeRssFeedListener;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -56,7 +55,7 @@ public class YoutubeRedditBot {
             // add a register a feed listener for every entry
             try {
                 log.info("initialising listener for {}", instance);
-                val feedListener = createFeedListener(instance.getListenerType(), instance,
+                FeedListener<?> feedListener = createFeedListener(instance.getListenerType(), instance,
                         new RedditManager(ConfigHandler.getInstance().getRedditCredentials().getRedditUserName()));
                 feedRegister.addEntry(feedListener);
             } catch (IOException e) {
