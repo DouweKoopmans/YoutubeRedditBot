@@ -103,8 +103,7 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
     private Consumer<String> processVideo(@NonNull final YoutubeProcessor processor) {
         return subreddit -> {
             log.debug("processing new video for /r/{}", subreddit);
-            Optional<Submission> submission = processor.postVideo(subreddit, false,
-                    () -> this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials()));
+            Optional<Submission> submission = processor.postVideo(subreddit, false);
             if (submission.isPresent() && instance.isPostComment()) {
                 processor.postComment(submission.get(), instance.getCommentFormatPath());
             }

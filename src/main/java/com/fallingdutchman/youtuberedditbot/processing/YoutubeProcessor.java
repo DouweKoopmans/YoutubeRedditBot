@@ -32,7 +32,7 @@ public final class YoutubeProcessor {
     @NonNull List<CommentRule> commentRules;
     @NonNull FormatterFactory formatterFactory = new FileFormatterFactory();
 
-    public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost, Runnable listener) {
+    public synchronized Optional<Submission> postVideo(String subreddit, boolean selfPost) {
         if (selfPost) {
             throw new UnsupportedOperationException("don't support self posts");
         } else {
@@ -41,7 +41,7 @@ public final class YoutubeProcessor {
             } catch (NetworkException e) {
                 log.error("post attempt was unsuccessful", e);
                 log.warn("attempting reauthentication");
-                listener.run();
+                reddit.reauthenticate();
                 try {
                     return this.reddit.submitPost(video.getVideoTitle(), video.getUrl(), subreddit);
                 } catch (NetworkException ex) {
@@ -71,6 +71,18 @@ public final class YoutubeProcessor {
             return Optional.empty();
         }
 
-        return this.reddit.submitComment(formatter.format(values), submission);
+        try {
+            return this.reddit.submitComment(formatter.format(values), submission);
+        } catch (NetworkException e) {
+            log.error("comment attempt was unsuccessful", e);
+            log.warn("attempting reauthentication");
+            reddit.reauthenticate();
+            try {
+                return this.reddit.submitComment(formatter.format(values), submission);
+            } catch (NetworkException ex) {
+                log.error("reauthentication attempt failed", ex);
+                return Optional.empty();
+            }
+        }
     }
 }

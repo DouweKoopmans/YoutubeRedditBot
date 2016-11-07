@@ -34,6 +34,7 @@ public class RedditManager {
      */
     public boolean shouldAuth = true;
     private final AccountManager accountManager;
+    private RedditCredentials redditCredentials;
 
     /**
      * standard constructor
@@ -49,6 +50,7 @@ public class RedditManager {
      * @throws NetworkException when the request was not successful
      */
     public void authenticate(final RedditCredentials redditCredentials) {
+        this.redditCredentials = redditCredentials;
         if (!shouldAuth) {
             return;
         }
@@ -68,6 +70,10 @@ public class RedditManager {
             log.error("a NetworkException occurred whilst trying to authenticate "
                     + redditCredentials.getRedditUserName() + '.' + "this could be caused by invalid credentials", e);
         }
+    }
+
+    public void reauthenticate() {
+        this.authenticate(redditCredentials);
     }
 
     /**
