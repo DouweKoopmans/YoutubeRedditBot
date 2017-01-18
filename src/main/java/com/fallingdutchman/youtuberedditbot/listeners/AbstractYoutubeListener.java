@@ -1,57 +1,84 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
-import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
+import com.fallingdutchman.youtuberedditbot.listeners.filtering.VideoFilter;
+import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
-import com.fallingdutchman.youtuberedditbot.polling.AbstractPoller;
-import com.fallingdutchman.youtuberedditbot.polling.DefaultNewVideoPoller;
-import com.fallingdutchman.youtuberedditbot.polling.DescriptionListenerPoller;
+import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
 import com.fallingdutchman.youtuberedditbot.processing.YoutubeProcessor;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import lombok.ToString;
+import com.google.api.client.util.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-import net.dean.jraw.models.Submission;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 import java.util.Timer;
-import java.util.function.Consumer;
+import java.util.TimerTask;
 
 /**
  * Created by douwe on 19-10-16.
  */
 @Slf4j
-@ToString(exclude = {"timer", "authenticator", "poller"}, doNotUseGetters = true)
-@EqualsAndHashCode(exclude = "timer")
-public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
-    @NonNull private final RedditManager authenticator;
-    @NonNull private final Instance instance;
-    @NonNull private final AbstractPoller poller;
-    private LocalDateTime latestVideo = LocalDateTime.now();
-    private Timer timer;
+@ToString(exclude = {"timer", "redditManager"}, doNotUseGetters = true)
+@EqualsAndHashCode(exclude = "timer", callSuper = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public abstract class AbstractYoutubeListener<E> extends TimerTask{
 
-    AbstractYoutubeListener(@NonNull RedditManager authenticator,@NonNull Instance instance) throws IOException {
-        this.authenticator = authenticator;
-        this.instance = instance;
-        this.authenticator.authenticate(ConfigHandler.getInstance().getRedditCredentials());
+    @Getter
+    final Instance instance;
+    final RedditManager redditManager;
+    final ProcessorFactory processorFactory;
+    final VideoFilter filter;
+    protected final AppConfig config;
+    private List<YoutubeVideo> videos = Lists.newArrayList();
+    @Getter(AccessLevel.PRIVATE)
+    @Setter LocalDateTime latestVideo = LocalDateTime.now();
+    Timer timer;
+    @Getter
+    @Setter(AccessLevel.PROTECTED)
+    boolean listening;
 
-        poller = createPoller();
+    @Inject
+    AbstractYoutubeListener(@Assisted @NonNull Instance configInstance, ProcessorFactory processorFactory,
+                            AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory)
+            throws IOException {
+        this.instance = configInstance;
+        this.filter = filterFactory.create(instance);
+        this.processorFactory = processorFactory;
+        this.redditManager = redditManagerRegistry.getManager(instance.getRedditCredentials().getRedditUsername());
+        this.config = config;
     }
 
-    @Override
-    public void listen() {
+
+    public final void listen() {
+        if (isListening()) {
+            throw new IllegalStateException("listener is already listening");
+        }
+
+        setListening(true);
+
         log.info("starting up new listener for {}", getInstance().getChannelId());
         timer = new Timer();
+        redditManager.authenticate(instance.getRedditCredentials());
+
+        if (!this.videos.isEmpty()) {
+            val youtubeVideo = this.videos.get(0);
+            this.setLatestVideo(youtubeVideo.getPublishDate());
+        }
 
         try {
             if (update() && onListen()) {
-                val period = (long) (getInstance().getPollerInterval() * 60);
-                timer.schedule(getPoller(), 0, period * 1000);
+                val period = (long) (getInstance().getInterval() * config.getListenerConfig().getIntervalStep());
+                timer.schedule(this, 0, period * 1000);
             } else {
                 log.warn("was unable to initiate the feed will not start the poller for {}", this.toString());
             }
@@ -60,63 +87,94 @@ public abstract class AbstractYoutubeListener<E> implements FeedListener<E> {
         }
     }
 
-    abstract boolean onListen();
-
-    @Override
-    public void stopListening() {
-        log.info("stopping listener for {}", getInstance().getChannelId());
-        timer.cancel();
+    protected final synchronized List<YoutubeVideo> getVideos() {
+        return ImmutableList.copyOf(videos);
     }
 
-    @Override
-    public void newVideoPosted(@NonNull final YoutubeVideo video) {
+    final synchronized void setVideos(List<YoutubeVideo> list) {
+        this.videos.clear();
+        videos = list;
+    }
+
+    @Nullable
+    public abstract YoutubeVideo extract(@NonNull E target);
+
+    protected boolean onListen() {
+        if (!this.videos.isEmpty()) {
+            val youtubeVideo = this.videos.get(0);
+            this.setLatestVideo(youtubeVideo.getPublishDate());
+        }
+
+        return true;
+    }
+
+    protected abstract boolean update();
+
+    public void stopListening() {
+        if (!isListening()) {
+            log.info("stopping listener for {}", getInstance().getChannelId());
+            timer.cancel();
+        } else {
+            throw new IllegalStateException("this listener isn't listening, you can't stop it");
+        }
+    }
+
+
+    private void handleNewVideo(@NonNull final YoutubeVideo video) {
         log.info("found a new video, \n {}", video.toString());
         this.setLatestVideo(video.getPublishDate());
-        YoutubeProcessor processor = new YoutubeProcessor(video, authenticator, instance.getCommentRules());
 
         log.info("processing video, id=\"{}\"", video.getVideoId());
-        getInstance().getSubreddits().forEach(processVideo(processor));
+        final YoutubeProcessor processor = processorFactory.create(this.instance, video);
+        getInstance().getSubreddit().forEach(processor::processVideo);
     }
 
     @Override
-    public LocalDateTime getLatestVideo() {
-        return latestVideo;
-    }
+    public final void run() {
+        val startTime = System.currentTimeMillis();
+        if (this.update()) {
+            val entries = scanForNewEntries(getVideos());
 
-    @Override
-    public Instance getInstance() {
-        return instance;
-    }
+            if (entries > 0) {
+                log.debug("poller for {} has found {} new videos", getInstance().getChannelId(), entries);
 
-    @Override
-    public AbstractPoller getPoller() {
-        return poller;
-    }
-
-    @Override
-    public void setLatestVideo(@NonNull final LocalDateTime date) {
-        this.latestVideo = date;
-        log.debug("setting latest video date of {} to {}", this.instance.getChannelId(), date);
-    }
-
-    @Nonnull
-    private Consumer<String> processVideo(@NonNull final YoutubeProcessor processor) {
-        return subreddit -> {
-            log.debug("processing new video for /r/{}", subreddit);
-            Optional<Submission> submission = processor.postVideo(subreddit, false);
-            if (submission.isPresent() && instance.isPostComment()) {
-                processor.postComment(submission.get(), instance.getCommentFormatPath());
+                this.videos.subList(0, entries).stream()
+                        .filter(this.filter)
+                        .forEach(this::handleNewVideo);
             }
-        };
+
+        } else {
+            log.warn("something went wrong updating the feed, will not run poller");
+        }
+
+        String latestVideoId;
+
+        if (this.videos.isEmpty()) {
+          latestVideoId = null;
+        } else {
+          latestVideoId = this.videos.get(0).getVideoId();
+        }
+
+        log.debug("finished polling in {} milliseconds. latest entry:  {id={}, date={}}",
+                System.currentTimeMillis() - startTime, latestVideoId, getLatestVideo());
     }
 
-    private AbstractPoller createPoller() {
-        switch (instance.getPollerType()) {
-            case "description-mention":
-                return new DescriptionListenerPoller(this);
-            case "new-video":
-            default:
-                return new DefaultNewVideoPoller(this);
+    /**
+     * scan for new entries
+     * @param entries the list of entries to scan
+     * @return the number of new entries
+     */
+    final int scanForNewEntries(@NonNull List<YoutubeVideo> entries) {
+        int i = 0;
+
+        for (YoutubeVideo entry : entries) {
+            if (entry.getPublishDate().isAfter(this.getLatestVideo())) {
+                i++;
+            }
+            else if (entry.getPublishDate().isEqual(this.getLatestVideo())) {
+                break; //when we find the "latest date" we know that every entry after that will be older an thus irrelevant
+            }
         }
+        return i;
     }
 }

@@ -17,7 +17,7 @@ import java.util.HashMap;
 @RunWith(Parameterized.class)
 public class FormatterTest {
 
-    @Parameterized.Parameter(0) public String format;
+    @Parameterized.Parameter public String format;
     @Parameterized.Parameter(1) public String input;
     @Parameterized.Parameter(2) public String expected;
     private Formatter formatter;
@@ -30,9 +30,9 @@ public class FormatterTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                        {"${test}", "foo bar\n", "foo bar  \n"},
-                        {"***\n${test}\n***", "foo bar", "***  \nfoo bar  \n***"},
-                        {"***\n\n***", "foo bar", "***  \n  \n***"},
+                        {"${test}", "foo bar\n", "foo bar\n"},
+                        {"***\n${test}\n***", "foo bar", "***\nfoo bar\n***"},
+                        {"***\n\n***", "foo bar", "***\n\n***"},
                         {"***foo***", "bar", "***foo***"}
                 }
         );

@@ -1,10 +1,13 @@
 package com.fallingdutchman.youtuberedditbot.authentication.reddit;
 
-import com.fallingdutchman.youtuberedditbot.model.RedditCredentials;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import com.fallingdutchman.youtuberedditbot.model.AppConfig;
+import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.dean.jraw.ApiException;
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.NetworkException;
@@ -14,8 +17,9 @@ import net.dean.jraw.http.oauth.OAuthException;
 import net.dean.jraw.managers.AccountManager;
 import net.dean.jraw.models.Submission;
 
+import javax.annotation.Nullable;
 import java.net.URL;
-import java.util.Optional;
+import java.util.Date;
 
 /**
  * stores a {@link Credentials} object and a {@link RedditClient} for an instance. used to authenticate an user and
@@ -24,51 +28,55 @@ import java.util.Optional;
  * Created by Douwe Koopmans on 28-1-16.
  */
 @Slf4j
-@ToString
 @EqualsAndHashCode
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RedditManager {
-    private final RedditClient reddit;
 
-    /**
-     * whether the {@link #authenticate(RedditCredentials)} method should execute, set to false for testing purposes
-     */
-    public boolean shouldAuth = true;
-    private final AccountManager accountManager;
-    private RedditCredentials redditCredentials;
+    @NonFinal Instance.RedditCredentials redditCredentials;
+    AppConfig.RedditConfig redditConfig;
+    RedditClient reddit;
+    AccountManager accountManager;
 
     /**
      * standard constructor
      */
-    public RedditManager(String username) {
-        reddit = new RedditClient(UserAgent.of("desktop", "com.fallingdutchman.youtuberedditbot", "1.0", username));
-        accountManager = new AccountManager(reddit);
+    @Inject
+    public RedditManager(@Assisted String username, AppConfig config) {
+        this.redditConfig = config.getRedditConfig();
+        this.reddit = new RedditClient(UserAgent.of("desktop", redditConfig.getAppId(), redditConfig.getVersion(),
+                username));
+        accountManager = new AccountManager(this.reddit);
     }
 
     /**
-     * authenticate the user, if {@link #shouldAuth} is set to false this won't do anything
+     * authenticate the user, if {@link AppConfig.RedditConfig#authenticatable} is set to false this won't do anything
      *
      * @throws NetworkException when the request was not successful
      */
-    public void authenticate(final RedditCredentials redditCredentials) {
-        this.redditCredentials = redditCredentials;
-        if (!shouldAuth) {
-            return;
+    @Synchronized
+    public void authenticate(@NonNull final Instance.RedditCredentials redditCredentials) {
+        if (!redditCredentials.equals(this.redditCredentials)) {
+            this.redditCredentials = redditCredentials;
         }
-        log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUserName());
-        val credentials = Credentials.script(redditCredentials.getRedditUserName(),
+
+        if (authenticated())
+            return;
+
+        log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUsername());
+        val credentials = Credentials.script(redditCredentials.getRedditUsername(),
                 redditCredentials.getRedditPassword(), redditCredentials.getRedditClientId(),
                 redditCredentials.getRedditOauthSecret());
         try {
             val authData = reddit.getOAuthHelper().easyAuth(credentials);
             reddit.authenticate(authData);
             log.info("successfully authenticated {} for the reddit API",
-                    redditCredentials.getRedditUserName());
+                    redditCredentials.getRedditUsername());
         } catch (OAuthException e) {
             log.error("an OAuth exception occurred whilst trying authenticate "
-                    + redditCredentials.getRedditUserName(), e);
+                    + redditCredentials.getRedditUsername(), e);
         } catch (NetworkException e) {
             log.error("a NetworkException occurred whilst trying to authenticate "
-                    + redditCredentials.getRedditUserName() + '.' + "this could be caused by invalid credentials", e);
+                    + redditCredentials.getRedditUsername() + '.' + "this could be caused by invalid credentials", e);
         }
     }
 
@@ -79,44 +87,50 @@ public class RedditManager {
     /**
      * submit a link post
      */
-    public Optional<Submission> submitPost(String title, URL url, String subreddit) {
+    @Synchronized
+    @Nullable
+    public Submission submitPost(String title, URL url, String subreddit) {
+        if (!authenticated())
+            return null;
+
         try {
             log.debug("attempting to submit new post to /r/{}, submission title {}, target url {}",
                     subreddit, title, url.toExternalForm());
-            val submission = submitPost(new AccountManager.SubmissionBuilder(url, subreddit, title)
+            val submission = accountManager.submit(new AccountManager.SubmissionBuilder(url, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
             log.info("submitted url to /r/{}, submission id: {}", submission.getSubredditName(),
                     submission.getId());
 
-            return Optional.of(submission);
+            return submission;
         } catch (ApiException e) {
             log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
                     "with the title {} and url {}", subreddit, title, url, e);
-            return Optional.empty();
+            return null;
         }
     }
 
-    public Optional<Submission> submitSelfPost(String title, String text, String subreddit) {
+    @Synchronized
+    @Nullable
+    public Submission submitSelfPost(String title, String text, String subreddit) {
+        if (!authenticated())
+            return null;
+
         try {
             log.debug("attempting to submit new self post to /r/{}, submission title {}, body {}",
                     subreddit, title, text);
-            val submission = submitPost(new AccountManager.SubmissionBuilder(text, subreddit, title)
+            val submission = accountManager.submit(new AccountManager.SubmissionBuilder(text, subreddit, title)
                     .resubmit(false)
                     .sendRepliesToInbox(false));
             log.info("submitted self post to /r/{}, submission id: {}", submission.getSubredditName(),
                     submission.getId());
 
-            return Optional.of(submission);
+            return submission;
         } catch (ApiException e) {
             log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
                     "with the title {} and url {}", subreddit, title, text, e);
-            return Optional.empty();
+            return null;
         }
-    }
-
-    private Submission submitPost(AccountManager.SubmissionBuilder submissionBuilder) throws ApiException {
-        return accountManager.submit(submissionBuilder);
     }
 
     /**
@@ -125,16 +139,26 @@ public class RedditManager {
      * @param submission submission object we want to reply to
      * @return the id of the comment
      */
-    public Optional<String> submitComment(String text,Submission submission) {
+    @Synchronized
+    @Nullable
+    public String submitComment(String text,Submission submission) {
+        if (!authenticated())
+            return null;
+
         try {
             val commentId = accountManager.reply(submission, text);
             log.info("posted comment to {} on /r/{}, with comment id {}", submission.getId(),
                     submission.getSubredditName(), commentId);
 
-            return Optional.of(commentId);
+            return commentId;
         } catch (ApiException e) {
             log.error("was unable to post comment", e);
-            return Optional.empty();
+            return null;
         }
+    }
+
+    private boolean authenticated() {
+        return !redditConfig.isAuthenticatable() ||
+                (reddit.isAuthenticated() && reddit.getOAuthData().getExpirationDate().after(new Date()));
     }
 }

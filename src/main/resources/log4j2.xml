@@ -17,7 +17,7 @@
     <Loggers>
         <Root level="trace">
             <AppenderRef ref="Console-std-out" level="DEBUG"/>
-            <AppenderRef ref="Console-std-err" level="WARN"/>
+            <!--<AppenderRef ref="Console-std-err" level="WARN"/>-->
             <AppenderRef ref="file" level="INFO"/>
         </Root>
     </Loggers>

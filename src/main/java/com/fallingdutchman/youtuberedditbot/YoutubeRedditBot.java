@@ -1,22 +1,31 @@
 package com.fallingdutchman.youtuberedditbot;
 
-import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
-import com.fallingdutchman.youtuberedditbot.config.ConfigHandler;
-import com.fallingdutchman.youtuberedditbot.listeners.FeedListener;
-import com.fallingdutchman.youtuberedditbot.listeners.YoutubeApiListener;
-import com.fallingdutchman.youtuberedditbot.listeners.YoutubeRssFeedListener;
+import com.fallingdutchman.youtuberedditbot.listeners.AbstractYoutubeListener;
+import com.fallingdutchman.youtuberedditbot.listeners.YoutubeListenerFactory;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.google.api.client.util.Lists;
+import com.google.inject.Guice;
+import lombok.AccessLevel;
+import lombok.NonNull;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.util.List;
 
 /**
  * Created by Douwe Koopmans on 8-1-16.
  */
 @Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class YoutubeRedditBot {
-    private static FeedRegister feedRegister = new FeedRegister();
+    final List<AbstractYoutubeListener> listeners = Lists.newArrayList();
+    final ConfigManager configManager;
+    YoutubeListenerFactory listenerFactory;
+
+    private YoutubeRedditBot() {
+        configManager = new ConfigManager();
+    }
 
     public static void main(String[] args) {
         try {
@@ -28,57 +37,48 @@ public class YoutubeRedditBot {
 
     private void run() {
         log.info("starting up!");
+        val injector = Guice.createInjector(new YrbModule(configManager.getAppConfig()));
 
-        log.info("applying ShutdownHook");
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                log.info("----------------------------------------------------");
-                log.info("printing stats");
-                feedRegister.print();
-                log.info("shutting down!");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("----------------------------------------------------");
+            log.info("there are currently {} feeds listening, feeds:", listeners.size());
+            for (int i = 0; i < listeners.size(); i++) {
+                val listener = listeners.get(i);
+
+                log.info("feed {}: ", i + 1);
+                log.info(listener.toString());
+                listener.stopListening();
             }
+            log.info("----------------------------------------------------");
+            log.info("shutting down!");
+        }));
+
+        listenerFactory = injector.getInstance(YoutubeListenerFactory.class);
+
+        val instances = configManager.loadInstances();
+
+        log.info("found and initialising {} entries", instances.size());
+
+        // create listeners
+        instances.forEach(instance -> {
+            log.info("initialising listener for {}", instance);
+            val feedListener = createFeedListener(instance.getListenerType(), instance);
+            listeners.add(feedListener);
         });
 
-        // load config
-        try {
-            ConfigHandler.getInstance().load();
-        } catch (Exception e) {
-            log.error("a fatal error occurred whilst trying to load the configurations, exiting", e);
-        }
-
-        // get all entries
-
-        log.info("found and initialising {} entries", ConfigHandler.getInstance().getEntries().size());
-
-        ConfigHandler.getInstance().getEntries().forEach(instance -> {
-            // add a register a feed listener for every entry
-            try {
-                log.info("initialising listener for {}", instance);
-                FeedListener<?> feedListener = createFeedListener(instance.getListenerType(), instance,
-                        new RedditManager(ConfigHandler.getInstance().getRedditCredentials().getRedditUserName()));
-                feedRegister.addEntry(feedListener);
-            } catch (IOException e) {
-                log.error("was unable to read stream from URL, please make sure the youtubeFeed " +
-                        "attribute in your config is correct and you the device is connected to the internet", e);
-            } catch (GeneralSecurityException e) {
-                log.error("a security exception occurred whilst trying to authenticate with the youtube api", e);
-            }
-        });
-
-        // start the listener
+        // start listeners
         log.info("starting listeners");
-        feedRegister.getEntries().forEach(FeedListener::listen);
+        listeners.forEach(AbstractYoutubeListener::listen);
     }
 
-    private static FeedListener<?> createFeedListener(String type, Instance instance, RedditManager manager)
-            throws IOException, GeneralSecurityException {
+    @NonNull
+    private AbstractYoutubeListener<?> createFeedListener(String type, Instance instance) {
         switch (type) {
             case "api":
-                return new YoutubeApiListener(manager, instance);
+                return listenerFactory.createApi(instance);
             case "rss":
             default:
-                return new YoutubeRssFeedListener(manager, instance);
+                return listenerFactory.createRss(instance);
         }
     }
 }

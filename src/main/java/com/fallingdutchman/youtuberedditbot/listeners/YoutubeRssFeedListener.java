@@ -1,20 +1,20 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
-import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
+import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
-import com.google.common.collect.ImmutableList;
+import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import lombok.ToString;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.jdom2.Content;
 import org.jdom2.Element;
 
@@ -22,44 +22,29 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * Created by Douwe Koopmans on 8-1-16.
- */
 @Slf4j
-@ToString(exclude = {"feed"}, doNotUseGetters = true, callSuper = true)
-@EqualsAndHashCode(exclude = "feed", callSuper = true)
+@ToString(doNotUseGetters = true, callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEntry> {
-    private final AtomicReference<SyndFeed> feed = new AtomicReference<>();
 
-    public YoutubeRssFeedListener(RedditManager authenticator, Instance instance) throws IOException {
-       super(authenticator, instance);
+    @Inject
+    public YoutubeRssFeedListener(@Assisted Instance instance, ProcessorFactory processorFactory, AppConfig config,
+                                  RedditManagerRegistry redditRegistry, FilterFactory filterFactory) throws IOException {
+        super(instance, processorFactory, config, redditRegistry, filterFactory);
     }
 
     @Override
-    boolean onListen() {
-        val youtubeVideo = this.extract(feed.get().getEntries().get(0));
-        if (youtubeVideo.isPresent()) {
-            this.setLatestVideo(youtubeVideo.get().getPublishDate());
-            return true;
-        } else {
-            log.warn("was unable to find latest video because of an issue with the feed, will not start the" +
-                    " following listener {}", this);
-            return false;
-        }
-    }
-
-    public Optional<YoutubeVideo> extract(@NonNull final SyndEntry entry) {
+    public YoutubeVideo extract(@NonNull final SyndEntry entry) {
         URL url;
         try {
             url = new URL(entry.getLink());
         } catch (MalformedURLException e) {
             log.error("url on found entry is malformed", e);
-            return Optional.empty();
+            return null;
         }
         String videoId;
         String description = "";
@@ -74,7 +59,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             videoId = optionalVideoId.get().getValue();
         } else {
             log.error("was not able to extract a videoId in feed entry {}", entry.toString());
-            return Optional.empty();
+            return null;
         }
 
         // extract description
@@ -94,14 +79,21 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             description = des.get();
         }
 
-        return Optional.of(new YoutubeVideo(entry.getTitle(), videoId, url, publishDate, description));
+        return new YoutubeVideo(entry.getTitle(), videoId, url, publishDate, description);
     }
 
+    @Synchronized
     @Override
     public boolean update() {
         try (XmlReader reader = new XmlReader(new URL(getFeedUrl()))) {
-            this.feed.set(new SyndFeedInput().build(reader));
+            val feed = new SyndFeedInput().build(reader);
             log.trace("updated feed of {}", getInstance().getChannelId());
+            setVideos(feed.getEntries().stream()
+                    .map(this::extract)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+
+            return true;
         } catch (FeedException e) {
             log.error("was unable to parse feed", e);
             return false;
@@ -113,26 +105,6 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
             return false;
         }
-        return true;
-    }
-
-    @Override
-    public List<YoutubeVideo> getVideos() {
-        return ImmutableList.copyOf(getFeed().getEntries()
-                .stream()
-                .map(syndEntry -> {
-                    Optional<YoutubeVideo> video = extract(syndEntry);
-                    if (video.isPresent()) {
-                        return video.get();
-                    } else {
-                        throw new IllegalStateException("there are malformed entries in the feed");
-                    }
-                })
-                .collect(Collectors.toList()));
-    }
-
-    private SyndFeed getFeed() {
-        return feed.get();
     }
 
     private String getFeedUrl() {
