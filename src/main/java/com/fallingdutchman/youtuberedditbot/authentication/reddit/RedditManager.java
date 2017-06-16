@@ -59,9 +59,6 @@ public class RedditManager {
             this.redditCredentials = redditCredentials;
         }
 
-        if (authenticated())
-            return;
-
         log.debug("authenticating {} for the reddit api", redditCredentials.getRedditUsername());
         val credentials = Credentials.script(redditCredentials.getRedditUsername(),
                 redditCredentials.getRedditPassword(), redditCredentials.getRedditClientId(),
@@ -90,14 +87,11 @@ public class RedditManager {
     @Synchronized
     @Nullable
     public Submission submitPost(String title, URL url, String subreddit) {
-        if (!authenticated())
-            return null;
-
         try {
             log.debug("attempting to submit new post to /r/{}, submission title {}, target url {}",
                     subreddit, title, url.toExternalForm());
             val submission = accountManager.submit(new AccountManager.SubmissionBuilder(url, subreddit, title)
-                    .resubmit(false)
+                    .resubmit(true)
                     .sendRepliesToInbox(false));
             log.info("submitted url to /r/{}, submission id: {}", submission.getSubredditName(),
                     submission.getId());
@@ -105,7 +99,11 @@ public class RedditManager {
             return submission;
         } catch (ApiException e) {
             log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
-                    "with the title {} and url {}", subreddit, title, url, e);
+                    "with the title {} and url {}. message: {}", subreddit, title, url, e.getLocalizedMessage());
+            log.debug("more info on the API error");
+            log.debug("reason: {}", e.getReason());
+            log.debug("explanation: {}", e.getExplanation());
+            log.debug("stacktrace: ", e);
             return null;
         }
     }
@@ -113,9 +111,6 @@ public class RedditManager {
     @Synchronized
     @Nullable
     public Submission submitSelfPost(String title, String text, String subreddit) {
-        if (!authenticated())
-            return null;
-
         try {
             log.debug("attempting to submit new self post to /r/{}, submission title {}, body {}",
                     subreddit, title, text);
@@ -128,7 +123,11 @@ public class RedditManager {
             return submission;
         } catch (ApiException e) {
             log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
-                    "with the title {} and url {}", subreddit, title, text, e);
+                    "with the title {} and url {}. error message: {}", subreddit, title, text, e.getLocalizedMessage());
+            log.debug("more info on the API error");
+            log.debug("reason: {}", e.getReason());
+            log.debug("explanation: {}", e.getExplanation());
+            log.debug("stacktrace: ", e);
             return null;
         }
     }
@@ -142,8 +141,6 @@ public class RedditManager {
     @Synchronized
     @Nullable
     public String submitComment(String text,Submission submission) {
-        if (!authenticated())
-            return null;
 
         try {
             val commentId = accountManager.reply(submission, text);
@@ -152,11 +149,17 @@ public class RedditManager {
 
             return commentId;
         } catch (ApiException e) {
-            log.error("was unable to post comment", e);
+            log.error("an API exception occurred whilst trying to submit a comment to {}. error message: {}" ,
+                    submission.getId(), e.getLocalizedMessage());
+            log.debug("more info on the API error");
+            log.debug("reason: {}", e.getReason());
+            log.debug("explanation: {}", e.getExplanation());
+            log.debug("stacktrace: ", e);
             return null;
         }
     }
 
+    @Deprecated
     private boolean authenticated() {
         return !redditConfig.isAuthenticatable() ||
                 (reddit.isAuthenticated() && reddit.getOAuthData().getExpirationDate().after(new Date()));
