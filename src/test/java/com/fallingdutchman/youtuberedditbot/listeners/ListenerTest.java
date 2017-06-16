@@ -1,6 +1,8 @@
 package com.fallingdutchman.youtuberedditbot.listeners;
 
-import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerFactory;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
+import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
@@ -22,9 +24,12 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by Douwe Koopmans on 22-1-16.
@@ -38,8 +43,11 @@ public class ListenerTest {
         @Before
         public void setUp() throws Exception {
             ProcessorFactory mockProcessorFactory = mock(ProcessorFactory.class);
-            RedditManagerFactory mockRedditFactory = mock(RedditManagerFactory.class);
+            RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
+            RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
+
+            when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
 
             Instance instance = new Instance("", new Instance.Comment("", false,
                     Lists.newArrayList()), "", new Instance.RedditCredentials("", "",
@@ -89,7 +97,13 @@ public class ListenerTest {
         public static Collection<Object> data() throws Exception {
             ClassLoader classLoader = ListenerTest.class.getClassLoader();
 
-            XmlReader reader = new XmlReader(classLoader.getResource("test-RssEntry.xml"));
+            final URL resource = classLoader.getResource("test-RssEntry.xml");
+
+            if (resource == null) {
+                fail("\"test-RssEntry.xml\" resource not found");
+            }
+
+            XmlReader reader = new XmlReader(resource);
 
             return new ArrayList<>(new SyndFeedInput().build(reader).getEntries());
         }
@@ -97,8 +111,11 @@ public class ListenerTest {
         @Before
         public void setUp() throws Exception {
             ProcessorFactory mockProcessorFactory = mock(ProcessorFactory.class);
-            RedditManagerFactory mockRedditFactory = mock(RedditManagerFactory.class);
+            RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
+            RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
+
+            when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
 
             Instance instance = new Instance("", new Instance.Comment("", false,
                     Lists.newArrayList()), "", new Instance.RedditCredentials("", "",
