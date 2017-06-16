@@ -2,6 +2,7 @@ package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.VideoFilter;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
@@ -38,6 +39,7 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
     final RedditManager redditManager;
     final ProcessorFactory processorFactory;
     final VideoFilter filter;
+    final HistoryManager historyManager;
     protected final AppConfig config;
     private List<YoutubeVideo> videos = Lists.newArrayList();
     @Getter(AccessLevel.PRIVATE)
@@ -47,15 +49,18 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
     @Setter(AccessLevel.PROTECTED)
     boolean listening;
 
+
     @Inject
     AbstractYoutubeListener(@Assisted @NonNull Instance configInstance, ProcessorFactory processorFactory,
-                            AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory)
+                            AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory,
+                            HistoryManager historyManager)
             throws IOException {
         this.instance = configInstance;
         this.filter = filterFactory.create(instance);
         this.processorFactory = processorFactory;
         this.redditManager = redditManagerRegistry.getManager(instance.getRedditCredentials().getRedditUsername());
         this.config = config;
+        this.historyManager = historyManager;
     }
 
 

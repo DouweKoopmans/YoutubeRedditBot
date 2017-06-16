@@ -17,7 +17,7 @@ public class FileFormatterFactoryTest {
 
     @Before
     public void setUp() throws Exception {
-        formatterFactory = new FileFormatterFactory(new AppConfig(new AppConfig.Formatting("md", "data/formats/"),
+        formatterFactory = new FileFormatterFactory(new AppConfig(new AppConfig.History("", ""), new AppConfig.Formatting("md", "data/formats/"),
                 new AppConfig.RedditConfig("fake", "fake", false), new AppConfig.UserConfig("data/", "",
                 "", "", ""), new AppConfig.YoutubeConfig(false, "",
                 0L), new AppConfig.ListenerConfig(0)));
