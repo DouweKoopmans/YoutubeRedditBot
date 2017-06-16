@@ -33,7 +33,7 @@ public class ConfigManagerTest {
 
         final Config config = ConfigManager.prepareConfig(ConfigFactory.parseResources("test-bots.conf"));
         //noinspection AccessStaticViaInstance
-        final List<Instance> actual = mockConfigManager.loadConfig(config);
+        final List<Instance> actual = mockConfigManager.getInstancesFromConfig(config);
         assertEquals("instances were incorrectly loaded", expected, actual);
     }
 }

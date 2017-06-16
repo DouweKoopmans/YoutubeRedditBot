@@ -59,7 +59,7 @@ public class YoutubeRedditBot {
 
         listenerFactory = injector.getInstance(YoutubeListenerFactory.class);
 
-        val instances = configManager.loadInstances();
+        val instances = configManager.getInstances();
 
         log.info("found and initialising {} entries", instances.size());
 

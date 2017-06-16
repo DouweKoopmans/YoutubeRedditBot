@@ -25,21 +25,20 @@ class ConfigManager {
     @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
     private final List<Instance> instances = loadInstances();
 
-
     public ConfigManager() {
         final Config defaultAppConfig = ConfigFactory.defaultApplication().resolve();
         final File file = new File(AppConfig.of(defaultAppConfig).getUserConfig().getAppConfigLocation());
-        setAppConfig(AppConfig.of(ConfigFactory.parseFile(file)
+        appConfig = AppConfig.of(ConfigFactory.parseFile(file)
                 .withFallback(defaultAppConfig)
-                .resolve()));
+                .resolve());
     }
 
-    List<Instance> loadInstances() {
+    private List<Instance> loadInstances() {
         final List<Instance> result = Lists.newArrayList();
         try {
             final String userConfigLocation = getAppConfig().getUserConfig().getUserConfigLocation();
             final Config userConfig = ConfigFactory.parseFile(new File(userConfigLocation));
-            result.addAll(loadConfig(prepareConfig(userConfig)));
+            result.addAll(getInstancesFromConfig(prepareConfig(userConfig)));
         } catch (Exception e) {
             log.error("a fatal error occurred whilst trying to load the configurations", e);
         }
@@ -48,7 +47,7 @@ class ConfigManager {
     }
 
     @VisibleForTesting
-    static List<Instance> loadConfig(Config config) {
+    static List<Instance> getInstancesFromConfig(Config config) {
         return Collections.unmodifiableList(config.getList("instances")
                 .stream()
                 .map(cv -> Instance.of(((ConfigObject) cv).toConfig()))
