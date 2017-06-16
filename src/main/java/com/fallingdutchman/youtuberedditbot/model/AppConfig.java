@@ -8,11 +8,25 @@ import lombok.val;
 
 @Value
 public class AppConfig {
+    @NonNull History history;
     @NonNull Formatting formatting;
     @NonNull RedditConfig redditConfig;
     @NonNull UserConfig userConfig;
     @NonNull YoutubeConfig youtubeConfig;
     @NonNull ListenerConfig listenerConfig;
+
+    @Value
+    public static class History {
+        @NonNull String fileExtension;
+        @NonNull String folder;
+
+        static History of(@NonNull Config c) {
+            val fileExtension = YrbUtils.getPathOrDefault(c, "fileExtension", "json");
+            val folder = YrbUtils.getPathOrDefault(c, "folder", "history");
+
+            return new History(fileExtension, folder);
+        }
+    }
 
     @Value
     public static class Formatting {
@@ -93,12 +107,13 @@ public class AppConfig {
     }
 
     public static AppConfig of(@NonNull Config c) {
+        val history = History.of(c.getConfig("history"));
         val formatting = Formatting.of(c.getConfig("formatting"));
         val reddit = RedditConfig.of(c.getConfig("reddit"));
         val userConfig = UserConfig.of(c.getConfig("userConfig"));
         val youtube = YoutubeConfig.of(c.getConfig("youtube"));
         val listenerConfig = ListenerConfig.of(c.getConfig("listener"));
 
-        return new AppConfig(formatting, reddit, userConfig, youtube, listenerConfig);
+        return new AppConfig(history, formatting, reddit, userConfig, youtube, listenerConfig);
     }
 }

@@ -2,6 +2,7 @@ package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
@@ -33,8 +34,9 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
 
     @Inject
     public YoutubeRssFeedListener(@Assisted Instance instance, ProcessorFactory processorFactory, AppConfig config,
-                                  RedditManagerRegistry redditRegistry, FilterFactory filterFactory) throws IOException {
-        super(instance, processorFactory, config, redditRegistry, filterFactory);
+                                  RedditManagerRegistry redditRegistry, FilterFactory filterFactory,
+                                  HistoryManager historyManager) throws IOException {
+        super(instance, processorFactory, config, redditRegistry, filterFactory, historyManager);
     }
 
     @Override
