@@ -70,11 +70,6 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
         timer = new Timer();
         redditManager.authenticate(instance.getRedditCredentials());
 
-        if (!this.videos.isEmpty()) {
-            val youtubeVideo = this.videos.get(0);
-            this.setLatestVideo(youtubeVideo.getPublishDate());
-        }
-
         try {
             if (update() && onListen()) {
                 val period = (long) (getInstance().getInterval() * config.getListenerConfig().getIntervalStep());
@@ -84,6 +79,18 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
             }
         } catch (Exception e) {
             log.error("an error occurred whilst trying to Listen to the feed: ", e);
+        }
+    }
+
+    public void stopListening() {
+        if (!isListening()) {
+            log.info("stopping listener for {}", getInstance().getChannelId());
+            timer.cancel();
+
+            timer = null;
+            setListening(false);
+        } else {
+            throw new IllegalStateException("this listener isn't listening, you can't stop it");
         }
     }
 
@@ -110,21 +117,9 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
 
     protected abstract boolean update();
 
-    public void stopListening() {
-        if (!isListening()) {
-            log.info("stopping listener for {}", getInstance().getChannelId());
-            timer.cancel();
-        } else {
-            throw new IllegalStateException("this listener isn't listening, you can't stop it");
-        }
-    }
-
 
     private void handleNewVideo(@NonNull final YoutubeVideo video) {
         log.info("found a new video, \n {}", video.toString());
-        this.setLatestVideo(video.getPublishDate());
-
-        log.info("processing video, id=\"{}\"", video.getVideoId());
         final YoutubeProcessor processor = processorFactory.create(this.instance, video);
         getInstance().getSubreddit().forEach(processor::processVideo);
     }
@@ -138,7 +133,10 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
             if (entries > 0) {
                 log.debug("poller for {} has found {} new videos", getInstance().getChannelId(), entries);
 
-                this.videos.subList(0, entries).stream()
+                final List<YoutubeVideo> youtubeVideos = this.videos.subList(0, entries);
+
+                youtubeVideos.forEach(youtubeVideo -> this.setLatestVideo(youtubeVideo.getPublishDate()));
+                youtubeVideos.stream()
                         .filter(this.filter)
                         .forEach(this::handleNewVideo);
             }
@@ -164,7 +162,7 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
      * @param entries the list of entries to scan
      * @return the number of new entries
      */
-    final int scanForNewEntries(@NonNull List<YoutubeVideo> entries) {
+    final int scanForNewEntries(@NonNull final List<YoutubeVideo> entries) {
         int i = 0;
 
         for (YoutubeVideo entry : entries) {
