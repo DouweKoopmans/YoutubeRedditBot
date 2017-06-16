@@ -36,10 +36,15 @@ public class YoutubeRedditBot {
     }
 
     private void run() {
+        log.info("");
+        log.info("#################################");
         log.info("starting up!");
+        log.info("#################################");
+        log.info("");
         val injector = Guice.createInjector(new YrbModule(configManager.getAppConfig()));
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("shutting down!");
             log.info("----------------------------------------------------");
             log.info("there are currently {} feeds listening, feeds:", listeners.size());
             for (int i = 0; i < listeners.size(); i++) {
@@ -50,7 +55,6 @@ public class YoutubeRedditBot {
                 listener.stopListening();
             }
             log.info("----------------------------------------------------");
-            log.info("shutting down!");
         }));
 
         listenerFactory = injector.getInstance(YoutubeListenerFactory.class);

@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by douwe on 3-10-16.
  */
-public class FileFormatterFactory implements FormatterFactory{
+public class FileFormatterFactory implements FormatterFactory {
     private final AppConfig.Formatting formattingConfig;
 
     public FileFormatterFactory(@NonNull final AppConfig config) {

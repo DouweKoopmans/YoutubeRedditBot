@@ -5,13 +5,13 @@
             <PatternLayout pattern="%highlight{${date:MM/dd} %d{HH:mm:ss} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
         </Console>
         <Console name="Console-std-err" target="SYSTEM_ERR">
-            <PatternLayout pattern="%highlight{${date:MM/dd} %d{HH:mm:ss} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
+            <PatternLayout pattern="%highlight{%d{MM/dd HH:mm:ss} %c{1} [%t] %-5level - %msg%n}{STYLE=Logback}"/>
             <Filters>
                 <ThresholdFilter level="WARN" onMatch="ACCEPT" />
             </Filters>
         </Console>
         <File name="file" fileName="data/log/app_${date:yyyy-MM-dd}.log">
-            <PatternLayout pattern="${date:MM/dd} %d{HH:mm:ss} %c{1} [%t] %-5level - %msg%n"/>
+            <PatternLayout pattern="%d{MM/dd HH:mm:ss} %c{1} [%t] %-5level - %msg%n"/>
         </File>
     </Appenders>
     <Loggers>
