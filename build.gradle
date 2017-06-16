@@ -80,7 +80,7 @@ docker {
         baseImage = 'java'
         maintainer = 'Douwe Koopmans'
         ports = [8080]
-        tag = 'latest'
+        tag = 'douwekoopmans/youtuberedditbot'
     }
 
     registryCredentials {
