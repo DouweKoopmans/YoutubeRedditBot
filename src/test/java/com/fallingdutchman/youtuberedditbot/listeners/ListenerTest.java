@@ -46,6 +46,7 @@ public class ListenerTest {
             RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
+            HistoryManager historyManager = mock(HistoryManager.class);
 
             when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
 
@@ -54,13 +55,13 @@ public class ListenerTest {
                     "", "fake"), Lists.newArrayList(), "", "", 1D,
                     "");
 
-            AppConfig appConfig = new AppConfig(new AppConfig.Formatting("", ""),
+            AppConfig appConfig = new AppConfig(new AppConfig.History("", ""), new AppConfig.Formatting("", ""),
                     new AppConfig.RedditConfig("fake", "fake", false), new AppConfig.UserConfig("", "",
                     "", "", ""), new AppConfig.YoutubeConfig(false, "",
                     0L), new AppConfig.ListenerConfig(0));
 
-            this.listener = new YoutubeRssFeedListener(instance, mockProcessorFactory, appConfig, mockRedditFactory,
-                    filterFactory);
+            this.listener = new YoutubeRssFeedListener(instance, mockProcessorFactory, appConfig, mockRedditRegistry,
+                    filterFactory, historyManager);
         }
 
         @Test
@@ -114,6 +115,7 @@ public class ListenerTest {
             RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
+            HistoryManager mockHistoryManager = mock(HistoryManager.class);
 
             when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
 
@@ -122,13 +124,13 @@ public class ListenerTest {
                     "", "fake"), Lists.newArrayList(), "", "", 1D,
                     "");
 
-            AppConfig appConfig = new AppConfig(new AppConfig.Formatting("", ""),
+            AppConfig appConfig = new AppConfig(new AppConfig.History("", ""), new AppConfig.Formatting("", ""),
                     new AppConfig.RedditConfig("fake", "fake", false), new AppConfig.UserConfig("", "",
                     "", "", ""), new AppConfig.YoutubeConfig(false, "",
                     0L), new AppConfig.ListenerConfig(0));
 
-            this.listener = new YoutubeRssFeedListener(instance, mockProcessorFactory, appConfig, mockRedditFactory,
-                    filterFactory);
+            this.listener = new YoutubeRssFeedListener(instance, mockProcessorFactory, appConfig,
+                    mockRedditRegistry, filterFactory, mockHistoryManager);
         }
 
         @Test
