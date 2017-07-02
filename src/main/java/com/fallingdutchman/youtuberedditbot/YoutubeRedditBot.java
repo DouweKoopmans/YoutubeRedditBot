@@ -61,6 +61,14 @@ public class YoutubeRedditBot {
 
         val instances = configManager.getInstances();
 
+        if (!configManager.getAppConfig().getYoutubeConfig().isUpdate()) {
+            log.warn("not updating with youtube API");
+        }
+
+        if (!configManager.getAppConfig().getRedditConfig().isAuthenticatable()) {
+            log.warn("not authenticating with reddit API");
+        }
+
         log.info("found and initialising {} entries", instances.size());
 
         // create listeners
