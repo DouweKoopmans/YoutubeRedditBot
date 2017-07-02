@@ -7,6 +7,7 @@ import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;
 import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
+import com.fallingdutchman.youtuberedditbot.model.Post;
 import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -25,18 +26,20 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Created by douwe on 2-10-16.
  */
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public final class YoutubeProcessor {
+public class YoutubeProcessor {
+    protected static final String YOUTUBE_LINK_PATTERN = "(?:https?://)?(?:www\\.)?youtu(?:be\\.com/watch\\?v=|\\.be/)([-_A-Za-z0-9]{10}[AEIMQUYcgkosw048])";
     YoutubeVideo video;
     RedditManager reddit;
     Instance configInstance;
     FormatterFactory formatterFactory;
-    HistoryManager historyManager;
+    protected HistoryManager historyManager;
 
     @Inject
     public YoutubeProcessor(@Assisted @NonNull YoutubeVideo video, @NonNull @Assisted Instance configInstance,
@@ -143,6 +146,8 @@ public final class YoutubeProcessor {
 
     private String generateCommentText(final String formatPath) throws IOException {
         String description = video.getDescription();
+        description = replaceYtLinks(description);
+
         for (Instance.Comment.CommentRule commentRule : configInstance.getComment().getRules()) {
             description = description.replaceAll(commentRule.getFind(), commentRule.getReplace());
         }
@@ -154,5 +159,29 @@ public final class YoutubeProcessor {
         values.put("description", description);
 
         return formatterFactory.createFormatterFromPath(formatPath).format(values);
+    }
+
+    protected String replaceYtLinks(@NonNull final String description) {
+        String result = description;
+        val matcher = Pattern.compile(YOUTUBE_LINK_PATTERN)
+                .matcher(description);
+
+        while(matcher.find()) {
+            val group = matcher.group(1);
+            val historyResult = historyManager.getHistory().stream()
+                    .filter(p -> p.getVideo().getVideoId().equals(group))
+                    .findFirst();
+
+            if (historyResult.isPresent()) {
+                final Post post = historyResult.get();
+                final YoutubeVideo postVideo = post.getVideo();
+
+                result = description.replace(matcher.group(), String.format("[%s](%s) \n" +
+                        "[ ^^\\(reddit ^^discussion)](%s)  ", postVideo.getVideoTitle(), postVideo.getUrl().toExternalForm(),
+                        post.getPermaLink()));
+            }
+        }
+
+        return result;
     }
 }

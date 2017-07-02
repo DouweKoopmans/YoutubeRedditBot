@@ -46,6 +46,7 @@ public class ListenerTest {
             RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
+            RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             HistoryManager historyManager = mock(HistoryManager.class);
 
             when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
@@ -115,6 +116,7 @@ public class ListenerTest {
             RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
+            RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             HistoryManager mockHistoryManager = mock(HistoryManager.class);
 
             when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
