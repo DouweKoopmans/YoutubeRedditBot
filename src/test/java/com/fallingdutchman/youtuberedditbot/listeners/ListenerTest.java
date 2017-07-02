@@ -46,10 +46,10 @@ public class ListenerTest {
             RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
-            RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
-            HistoryManager historyManager = mock(HistoryManager.class);
 
             when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
+
+            HistoryManager historyManager = mock(HistoryManager.class);
 
             Instance instance = new Instance("", new Instance.Comment("", false,
                     Lists.newArrayList()), "", new Instance.RedditCredentials("", "",
@@ -116,10 +116,10 @@ public class ListenerTest {
             RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
             RedditManager mockRedditManager = mock(RedditManager.class);
             FilterFactory filterFactory = mock(FilterFactory.class);
-            RedditManagerRegistry mockRedditRegistry = mock(RedditManagerRegistry.class);
-            HistoryManager mockHistoryManager = mock(HistoryManager.class);
 
             when(mockRedditRegistry.getManager(anyString())).thenReturn(mockRedditManager);
+
+            HistoryManager historyManager = mock(HistoryManager.class);
 
             Instance instance = new Instance("", new Instance.Comment("", false,
                     Lists.newArrayList()), "", new Instance.RedditCredentials("", "",
@@ -131,8 +131,8 @@ public class ListenerTest {
                     "", "", ""), new AppConfig.YoutubeConfig(false, "",
                     0L), new AppConfig.ListenerConfig(0));
 
-            this.listener = new YoutubeRssFeedListener(instance, mockProcessorFactory, appConfig,
-                    mockRedditRegistry, filterFactory, mockHistoryManager);
+            this.listener = new YoutubeRssFeedListener(instance, mockProcessorFactory, appConfig, mockRedditRegistry,
+                    filterFactory, historyManager);
         }
 
         @Test
