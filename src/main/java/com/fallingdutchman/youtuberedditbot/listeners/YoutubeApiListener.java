@@ -2,6 +2,7 @@ package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
@@ -41,13 +42,13 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
 
     @Inject
     public YoutubeApiListener(@Assisted @NonNull Instance instance, ProcessorFactory processorFactory,
-                              @NonNull AppConfig config, RedditManagerRegistry redditRegistry, FilterFactory filterFactory)
+                              @NonNull AppConfig config, RedditManagerRegistry redditRegistry, FilterFactory filterFactory,
+                              HistoryManager historyManager)
             throws IOException, GeneralSecurityException {
-        super(instance, processorFactory, config, redditRegistry, filterFactory);
+        super(instance, processorFactory, config, redditRegistry, filterFactory, historyManager);
 
         Preconditions.checkNotNull(instance.getYoutubeApiKey(), "need a youtube api key to run an API listener");
         Preconditions.checkArgument(!instance.getYoutubeApiKey().isEmpty(), "need a youtube api key to run an API listener");
-
 
         youtubeConfig = config.getYoutubeConfig();
         youtube = new YouTube.Builder(GoogleNetHttpTransport.newTrustedTransport(),
