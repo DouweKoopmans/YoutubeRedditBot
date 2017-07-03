@@ -19,7 +19,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Timer;
@@ -53,8 +52,7 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
     @Inject
     AbstractYoutubeListener(@Assisted @NonNull Instance configInstance, ProcessorFactory processorFactory,
                             AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory,
-                            HistoryManager historyManager)
-            throws IOException {
+                            HistoryManager historyManager) {
         this.instance = configInstance;
         this.filter = filterFactory.create(instance);
         this.processorFactory = processorFactory;

@@ -2,6 +2,7 @@ package com.fallingdutchman.youtuberedditbot.processing;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.authentication.youtube.YoutubeManager;
 import com.fallingdutchman.youtuberedditbot.formatting.FileFormatterFactory;
 import com.fallingdutchman.youtuberedditbot.formatting.FormatterFactory;
 import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
@@ -9,6 +10,7 @@ import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.Post;
 import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.google.api.services.youtube.model.Video;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -34,19 +36,21 @@ import java.util.regex.Pattern;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class YoutubeProcessor {
-    protected static final String YOUTUBE_LINK_PATTERN = "(?:https?://)?(?:www\\.)?youtu(?:be\\.com/watch\\?v=|\\.be/)([-_A-Za-z0-9]{10}[AEIMQUYcgkosw048])";
+    protected static String youtubeLinkPattern = "(?:https?://)?(?:www\\.)?youtu(?:be\\.com/watch\\?v=|\\.be/)([-_A-Za-z0-9]{10}[AEIMQUYcgkosw048])";
     YoutubeVideo video;
     RedditManager reddit;
     Instance configInstance;
     FormatterFactory formatterFactory;
-    protected HistoryManager historyManager;
+    HistoryManager historyManager;
+    YoutubeManager youtubeManager;
 
     @Inject
     public YoutubeProcessor(@Assisted @NonNull YoutubeVideo video, @NonNull @Assisted Instance configInstance,
                             @NonNull AppConfig config, @NonNull RedditManagerRegistry redditRegistry,
-                            @NonNull HistoryManager historyManager) {
+                            @NonNull HistoryManager historyManager, @NonNull YoutubeManager youtubeManager) {
         this.video = video;
         this.historyManager = historyManager;
+        this.youtubeManager = youtubeManager;
         this.reddit = redditRegistry.getManager(configInstance.getRedditCredentials().getRedditUsername());
         this.configInstance = configInstance;
         this.formatterFactory = new FileFormatterFactory(config);
@@ -163,13 +167,11 @@ public class YoutubeProcessor {
 
     protected String replaceYtLinks(@NonNull final String description) {
         String result = description;
-        val matcher = Pattern.compile(YOUTUBE_LINK_PATTERN)
-                .matcher(description);
+        val matcher = Pattern.compile(youtubeLinkPattern).matcher(description);
 
-        while(matcher.find()) {
-            val group = matcher.group(1);
+        while (matcher.find()) {
             val historyResult = historyManager.getHistory().stream()
-                    .filter(p -> p.getVideo().getVideoId().equals(group))
+                    .filter(p -> p.getVideo().getVideoId().equals(matcher.group(1)))
                     .findFirst();
 
             if (historyResult.isPresent()) {
@@ -177,8 +179,17 @@ public class YoutubeProcessor {
                 final YoutubeVideo postVideo = post.getVideo();
 
                 result = description.replace(matcher.group(), String.format("[%s](%s) \n" +
-                        "[ ^^\\(reddit ^^discussion)](%s)  ", postVideo.getVideoTitle(), postVideo.getUrl().toExternalForm(),
+                                "[ ^^\\(reddit ^^discussion)](%s)  ", postVideo.getVideoTitle(), postVideo.getUrl().toExternalForm(),
                         post.getPermaLink()));
+            } else try {
+                final Optional<Video> videoData;
+                videoData = this.youtubeManager.getVideoDataFromVideoId(matcher.group(1), configInstance.getYoutubeApiKey());
+                if (videoData.isPresent()) {
+                    result = description.replace(matcher.group(), String.format("[%s](%s) \n",
+                            videoData.get().getSnippet().getTitle(), matcher.group()));
+                }
+            } catch (IOException e) {
+                log.error("an IOException occurred trying to query the YouTube API for videoId: " + matcher.group(1), e);
             }
         }
 
