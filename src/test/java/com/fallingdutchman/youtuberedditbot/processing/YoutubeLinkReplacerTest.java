@@ -1,6 +1,7 @@
 package com.fallingdutchman.youtuberedditbot.processing;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
+import com.fallingdutchman.youtuberedditbot.authentication.youtube.YoutubeManager;
 import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
@@ -9,7 +10,6 @@ import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -52,14 +52,15 @@ public class YoutubeLinkReplacerTest {
                 0L), new AppConfig.ListenerConfig(0));
 
         final RedditManagerRegistry mockRedditManagerRegistry = mock(RedditManagerRegistry.class);
-        when(mockRedditManagerRegistry.getManager("foobar")).thenReturn(Mockito.any());
+        when(mockRedditManagerRegistry.getManager("foobar")).thenReturn(null);
 
         final YoutubeVideo mockVideo = new YoutubeVideo("", "", new URL("http://google.com"),
                 LocalDateTime.now(), "");
 
+        final YoutubeManager mockYtManager = mock(YoutubeManager.class);
 
         final YoutubeProcessor processor = new YoutubeProcessor(mockVideo, mockConfigInstance,
-                mockAppconfig, mockRedditManagerRegistry, mockHistoryManager);
+                mockAppconfig, mockRedditManagerRegistry, mockHistoryManager, mockYtManager);
 
         final String testDescription = "www.youtube.com/watch?v=GYVcte-6RPg";
         final String expected = "[title](http://www.youtube.com/watch?v=GYVcte-6RPg) \n" +
@@ -70,17 +71,17 @@ public class YoutubeLinkReplacerTest {
 
     @Test
     public void testYoutubePattern() throws Exception {
-        final Pattern testPattern = Pattern.compile(YoutubeProcessor.YOUTUBE_LINK_PATTERN);
-        final Set<String> postiveTestStrings = new HashSet<>();
+        final Pattern testPattern = Pattern.compile(YoutubeProcessor.youtubeLinkPattern);
+        final Set<String> positiveTestStrings = new HashSet<>();
         final Set<String> negativeTestStrings = new HashSet<>();
 
-        postiveTestStrings.add("www.youtube.com/watch?v=GYVcte-6RPg");
-        postiveTestStrings.add("http://www.youtube.com/watch?v=GYVcte-6RPg");
-        postiveTestStrings.add("https://www.youtube.com/watch?v=GYVcte-6RPg");
-        postiveTestStrings.add("https://youtube.com/watch?v=GYVcte-6RPg");
-        postiveTestStrings.add("https://youtu.be/GYVcte-6RPg");
-        postiveTestStrings.add("http://youtu.be/GYVcte-6RPg");
-        postiveTestStrings.add("www.youtu.be/GYVcte-6RPg");
+        positiveTestStrings.add("www.youtube.com/watch?v=GYVcte-6RPg");
+        positiveTestStrings.add("http://www.youtube.com/watch?v=GYVcte-6RPg");
+        positiveTestStrings.add("https://www.youtube.com/watch?v=GYVcte-6RPg");
+        positiveTestStrings.add("https://youtube.com/watch?v=GYVcte-6RPg");
+        positiveTestStrings.add("https://youtu.be/GYVcte-6RPg");
+        positiveTestStrings.add("http://youtu.be/GYVcte-6RPg");
+        positiveTestStrings.add("www.youtu.be/GYVcte-6RPg");
 
         negativeTestStrings.add("www.youtube.com/user/FooBar");
         negativeTestStrings.add("www.youtube.com/channel/foobarfoobarfoobar");
@@ -89,7 +90,7 @@ public class YoutubeLinkReplacerTest {
         negativeTestStrings.add("http://www.foobar.com/watch?v=GYVcte-6RPg");
 
 
-        postiveTestStrings.forEach(s -> {
+        positiveTestStrings.forEach(s -> {
             final Matcher matcher = testPattern.matcher(s);
             if (!matcher.find()) {
                 fail("failed to match string: " + s);
