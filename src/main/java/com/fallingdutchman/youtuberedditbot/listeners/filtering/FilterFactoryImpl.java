@@ -15,7 +15,7 @@ public class FilterFactoryImpl implements FilterFactory {
     public VideoFilter create(@NonNull Instance instance) {
         switch (instance.getPollerType()) {
             case "description-mention":
-                return createDescriptionFilter(instance.getChannelId(), instance.getYoutubeName());
+                return createDescriptionFilter(instance.getTarget().getChannelId(), instance.getTarget().getYoutubeName());
             case "new-video":
             default:
                 return createNewVideoFilter();

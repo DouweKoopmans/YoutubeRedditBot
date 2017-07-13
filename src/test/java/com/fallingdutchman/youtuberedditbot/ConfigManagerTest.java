@@ -26,10 +26,16 @@ public class ConfigManagerTest {
     public void loadConfig() throws Exception {
         List<Instance> expected = Lists.newArrayList(
                 new Instance("fakeChannel", new Comment("description",
-                true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
-                "new-video", new Instance.RedditCredentials("fake", "fake",
-                "fake", "fake"), Lists.newArrayList("foobar"), "fake", null,
-                1, "api"));
+                        true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
+                        "new-video", new Instance.RedditCredentials("fake", "fake",
+                        "fake", "fake"), Lists.newArrayList("foobar"), "fake", null,
+                        1, "api"),
+                new Instance("channel1", new Comment("description",
+                        true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
+                        "description-mention", new Instance.RedditCredentials("fake", "fake",
+                        "fake", "fake"), Lists.newArrayList("foobar"), "fake", new Instance.Target("name", "channel2"),
+                        1, "api")
+        );
 
         final Config config = ConfigManager.prepareConfig(ConfigFactory.parseResources("test-bots.conf"));
         //noinspection AccessStaticViaInstance

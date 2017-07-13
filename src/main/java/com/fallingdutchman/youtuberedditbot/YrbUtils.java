@@ -70,4 +70,9 @@ public class YrbUtils {
     public boolean getPathOrDefault(Config config, String path, boolean defaultValue) {
         return config.hasPathOrNull(path) ? config.getBoolean(path) : defaultValue;
     }
+
+    @NonNull
+    public Optional<Config> getOptionalConfig(Config config, String path) {
+        return config.hasPathOrNull(path) ? Optional.of(config.getConfig(path)) : Optional.empty();
+    }
 }

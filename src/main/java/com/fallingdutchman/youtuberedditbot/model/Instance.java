@@ -18,9 +18,22 @@ public class Instance {
     @NonNull RedditCredentials redditCredentials;
     @NonNull List<String> subreddit;
     @Nullable String youtubeApiKey;
-    @Nullable String youtubeName;
+    @Nullable Target target;
     double interval;
     @NonNull String listenerType;
+
+    @Value
+    public static class Target {
+        @NonNull String youtubeName;
+        @NonNull String channelId;
+
+        static Target of(Config c) {
+            val youtubeName = c.getString("youtubeName");
+            val replace = c.getString("channelId");
+
+            return new Target(youtubeName, replace);
+        }
+    }
 
     @Value
     public static class Comment {
@@ -90,9 +103,9 @@ public class Instance {
         val interval = YrbUtils.getPathOrDefault(c, "interval", 0.5D);
         val listenerType = YrbUtils.getPathOrDefault(c, "listenerType", "rss");
         String youtubeApiKey = YrbUtils.getPathOrDefault(c, "youtubeApiKey", null);
-        String youtubeName = YrbUtils.getPathOrDefault(c, "youtubeName", null);
+        val target = YrbUtils.getOptionalConfig(c, "target").map(Target::of).orElse(null);
 
-        return new Instance(channelId, comment, pollerType, redditCredentials, subreddit,youtubeApiKey, youtubeName,
+        return new Instance(channelId, comment, pollerType, redditCredentials, subreddit,youtubeApiKey, target,
                 interval, listenerType);
     }
 }
