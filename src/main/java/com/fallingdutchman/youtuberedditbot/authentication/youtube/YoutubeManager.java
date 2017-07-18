@@ -8,6 +8,7 @@ import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.Video;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.NonNull;
@@ -27,6 +28,7 @@ public class YoutubeManager {
     private final AppConfig.YoutubeConfig config;
     YouTube youTube;
 
+    @Inject
     public YoutubeManager(@NonNull AppConfig config) throws GeneralSecurityException, IOException {
 
         this.config = config.getYoutubeConfig();
