@@ -34,7 +34,7 @@ import static java.util.stream.Collectors.toList;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
     AppConfig.YoutubeConfig youtubeConfig;
-    private final YoutubeManager youtubeManager;
+    YoutubeManager youtubeManager;
 
     @Inject
     public YoutubeApiListener(@Assisted @NonNull Instance instance, ProcessorFactory processorFactory,

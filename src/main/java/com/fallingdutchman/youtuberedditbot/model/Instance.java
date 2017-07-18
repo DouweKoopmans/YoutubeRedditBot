@@ -29,9 +29,9 @@ public class Instance {
 
         static Target of(Config c) {
             val youtubeName = c.getString("youtubeName");
-            val replace = c.getString("channelId");
+            val channelId = c.getString("channelId");
 
-            return new Target(youtubeName, replace);
+            return new Target(youtubeName, channelId);
         }
     }
 
