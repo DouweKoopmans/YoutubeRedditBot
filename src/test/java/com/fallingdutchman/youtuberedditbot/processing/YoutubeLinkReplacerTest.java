@@ -7,20 +7,21 @@ import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.Post;
 import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.google.api.services.youtube.model.Video;
+import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.common.collect.Lists;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
 // TODO: 19-6-17
 public class YoutubeLinkReplacerTest {
     @Test
-    public void replaceYtLinks() throws Exception {
+    public void replaceYtLinkInHistory() throws Exception {
         List<Post> mockPosts = new ArrayList<>();
         mockPosts.add(new Post(new YoutubeVideo("title", "GYVcte-6RPg",
                 new URL("http://www.youtube.com/watch?v=GYVcte-6RPg"), LocalDateTime.now(),
@@ -66,7 +67,52 @@ public class YoutubeLinkReplacerTest {
         final String expected = "[title](http://www.youtube.com/watch?v=GYVcte-6RPg) \n" +
                 "[ ^^\\(reddit ^^discussion)](reddit.com/foobar)  ";
 
-        Assert.assertEquals(expected, processor.replaceYtLinks(testDescription));
+        assertEquals(expected, processor.replaceYtLinks(testDescription));
+    }
+
+    @Test
+    public void testYtLinkNotInHistory() throws Exception {
+        final String videoId = "GYVcte-6RPg";
+        final String videoTitle = "title";
+
+        //history manager
+        final HistoryManager mockHistoryManager = mock(HistoryManager.class);
+        when(mockHistoryManager.getHistory()).thenReturn(new ArrayList<>());
+
+        //config instance
+        final Instance fakeConfigInstance =  new Instance("fakeChannel", new Instance.Comment("description",
+                true, Lists.newArrayList(new Instance.Comment.CommentRule("foo", "bar"))),
+                "new-video", new Instance.RedditCredentials("fake", "fake",
+                "fake", "foobar"), Lists.newArrayList("foobar"), "fake", null,
+                1, "api");
+
+        //App Config
+        final AppConfig fakeAppConfig = new AppConfig(new AppConfig.History("", ""), new AppConfig.Formatting("md", "data/formats/"),
+                new AppConfig.RedditConfig("fake", "fake", false), new AppConfig.UserConfig("data/", "",
+                "", "", ""), new AppConfig.YoutubeConfig(false, "",
+                0L), new AppConfig.ListenerConfig(0));
+
+        //Reddit Manager Registry
+        final RedditManagerRegistry mockRedditManagerRegistry = mock(RedditManagerRegistry.class);
+        when(mockRedditManagerRegistry.getManager("foobar")).thenReturn(null);
+
+        //Youtube Video
+        final YoutubeVideo fakeVideo = new YoutubeVideo("", "", new URL("http://google.com"), LocalDateTime.now(), "");
+
+        //Youtube Manager
+        final VideoSnippet videoSnippet = new VideoSnippet().setTitle(videoTitle);
+        final Video testVideo = new Video().setSnippet(videoSnippet);
+        final YoutubeManager mockYtManager = mock(YoutubeManager.class);
+        when(mockYtManager.getVideoDataFromVideoId(eq(videoId), anyString())).thenReturn(Optional.of(testVideo));
+
+        //Youtube Processor
+        final YoutubeProcessor processor = new YoutubeProcessor(fakeVideo, fakeConfigInstance, fakeAppConfig,
+                mockRedditManagerRegistry, mockHistoryManager, mockYtManager);
+
+        final String testDescription = "http://www.youtube.com/watch?v=" + videoId;
+        final String expected = "[" + videoTitle + "](http://www.youtube.com/watch?v=" + videoId + ") \n";
+
+        assertEquals(expected, processor.replaceYtLinks(testDescription));
     }
 
     @Test
@@ -99,7 +145,7 @@ public class YoutubeLinkReplacerTest {
             String videoId = matcher.group(1);
 
             if (!"GYVcte-6RPg".equals(videoId)) {
-                fail("did not found right video id for string: " + s
+                fail("did not find right video id for string: " + s
                         + " expected GYVcte-6RPg but got " + videoId);
             }
         });
