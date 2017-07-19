@@ -73,6 +73,11 @@ public class YoutubeRedditBot {
 
         // create listeners
         instances.forEach(instance -> {
+            if (!instance.isEnabled()) {
+                log.warn("instance is disabled. Instance: " + instance.getName());
+                return;
+            }
+
             log.info("initialising listener for {}", instance);
             val feedListener = createFeedListener(instance.getListenerType(), instance);
             listeners.add(feedListener);

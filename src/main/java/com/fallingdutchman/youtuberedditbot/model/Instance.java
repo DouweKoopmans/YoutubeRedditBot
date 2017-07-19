@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 @Value
 public class Instance {
+    boolean enabled;
+    @Nullable String name;
     @NonNull String channelId;
     @NonNull Comment comment;
     @NonNull String pollerType;
@@ -93,6 +95,8 @@ public class Instance {
     }
 
     public static Instance of(Config c) {
+        val enabled = c.getBoolean("enabled");
+        val name = c.getString("name");
         val channelId = c.getString("channelId");
         val comment = Comment.of(c.getConfig("comment"));
         val pollerType = YrbUtils.getPathOrDefault(c, "pollerType", "new-video");
@@ -100,13 +104,13 @@ public class Instance {
         List<String> subreddit = Collections.unmodifiableList(c.getList("subreddit").stream()
                 .map(cv -> String.valueOf(cv.unwrapped()))
                 .collect(Collectors.toList()));
-        val interval = YrbUtils.getPathOrDefault(c, "interval", 0.5D);
+        val interval = YrbUtils.getPathOrDefault(c, "interval", 5D);
         val listenerType = YrbUtils.getPathOrDefault(c, "listenerType", "rss");
         String youtubeApiKey = YrbUtils.getPathOrDefault(c, "youtubeApiKey", null);
         val target = YrbUtils.getOptionalConfig(c, "target").map(Target::of).orElse(null);
 
-        return new Instance(channelId, comment, pollerType, redditCredentials, subreddit,youtubeApiKey, target,
-                interval, listenerType);
+        return new Instance(enabled, name, channelId, comment, pollerType, redditCredentials, subreddit, youtubeApiKey,
+                target, interval, listenerType);
     }
 }
       
