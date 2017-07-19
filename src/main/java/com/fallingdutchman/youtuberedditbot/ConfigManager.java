@@ -25,9 +25,9 @@ class ConfigManager {
     @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
     private final List<Instance> instances = loadInstances();
 
-    public ConfigManager() {
-        final Config defaultAppConfig = ConfigFactory.defaultApplication().resolve();
-        final File file = new File(AppConfig.of(defaultAppConfig).getUserConfig().getAppConfigLocation());
+    ConfigManager() {
+        val defaultAppConfig = ConfigFactory.defaultApplication().resolve();
+        val file = new File(AppConfig.of(defaultAppConfig).getUserConfig().getAppConfigLocation());
         appConfig = AppConfig.of(ConfigFactory.parseFile(file)
                 .withFallback(defaultAppConfig)
                 .resolve());
@@ -36,8 +36,8 @@ class ConfigManager {
     private List<Instance> loadInstances() {
         final List<Instance> result = Lists.newArrayList();
         try {
-            final String userConfigLocation = getAppConfig().getUserConfig().getUserConfigLocation();
-            final Config userConfig = ConfigFactory.parseFile(new File(userConfigLocation));
+            val userConfigLocation = getAppConfig().getUserConfig().getUserConfigLocation();
+            val userConfig = ConfigFactory.parseFile(new File(userConfigLocation));
             result.addAll(getInstancesFromConfig(prepareConfig(userConfig)));
         } catch (Exception e) {
             log.error("a fatal error occurred whilst trying to load the configurations", e);
@@ -50,7 +50,7 @@ class ConfigManager {
     static List<Instance> getInstancesFromConfig(Config config) {
         return Collections.unmodifiableList(config.getList("instances")
                 .stream()
-                .map(cv -> Instance.of(((ConfigObject) cv).toConfig()))
+                .map(cv -> Instance.of(((ConfigObject) cv.withFallback(config.getConfig("defaultEntry"))).toConfig()))
                 .collect(Collectors.toList()));
     }
 
@@ -58,7 +58,7 @@ class ConfigManager {
     static Config prepareConfig(@NonNull Config userConfig) {
         return ConfigFactory.defaultOverrides()
                 .withFallback(userConfig)
-                .withFallback(ConfigFactory.load("UserDefaults"))
+                .withFallback(ConfigFactory.parseResources("UserDefaults.conf"))
                 .resolve();
     }
 }
