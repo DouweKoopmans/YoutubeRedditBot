@@ -30,7 +30,7 @@ public class FilterFactoryImpl implements FilterFactory {
         return input -> {
             final String regexString = String.format("https?://www\\.youtube\\.com/((user/)?%s|channel/%s)", channelName,
                     channelId);
-            val regex = Pattern.compile(regexString, Pattern.UNIX_LINES | Pattern.MULTILINE);
+            val regex = Pattern.compile(regexString, Pattern.UNIX_LINES | Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 
             return regex.matcher(input.getDescription()).find();
         };
