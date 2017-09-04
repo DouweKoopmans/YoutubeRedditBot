@@ -25,12 +25,12 @@ public class ConfigManagerTest {
     @Test
     public void loadConfig() throws Exception {
         List<Instance> expected = Lists.newArrayList(
-                new Instance("fakeChannel", new Comment("description",
+                new Instance(true, "fakeChannel", "fakeChannel", new Comment("description",
                         true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
                         "new-video", new Instance.RedditCredentials("fake", "fake",
                         "fake", "fake"), Lists.newArrayList("foobar"), "fake", null,
                         1, "api"),
-                new Instance("channel1", new Comment("description",
+                new Instance(true, "fakeChannel", "channel1", new Comment("description",
                         true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
                         "description-mention", new Instance.RedditCredentials("fake", "fake",
                         "fake", "fake"), Lists.newArrayList("foobar"), "fake", new Instance.Target("name", "channel2"),

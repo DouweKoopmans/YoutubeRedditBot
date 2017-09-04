@@ -51,7 +51,7 @@ public class ListenerTest {
 
             HistoryManager historyManager = mock(HistoryManager.class);
 
-            Instance instance = new Instance("", new Instance.Comment("", false,
+            Instance instance = new Instance(true, "", "", new Instance.Comment("", false,
                     Lists.newArrayList()), "", new Instance.RedditCredentials("", "", "", "fake"), Lists.newArrayList(),
                     "", new Instance.Target("", ""), 1D, "");
 
@@ -119,7 +119,7 @@ public class ListenerTest {
 
             HistoryManager historyManager = mock(HistoryManager.class);
 
-            Instance instance = new Instance("", new Instance.Comment("", false,
+            Instance instance = new Instance(true, "", "", new Instance.Comment("", false,
                     Lists.newArrayList()), "", new Instance.RedditCredentials("", "", "", "fake"), Lists.newArrayList(),
                     "", new Instance.Target("", ""), 1D, "");
 

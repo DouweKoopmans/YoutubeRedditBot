@@ -41,7 +41,7 @@ public class YoutubeLinkReplacerTest {
         final HistoryManager mockHistoryManager = mock(HistoryManager.class);
         when(mockHistoryManager.getHistory()).thenReturn(mockPosts);
 
-        final Instance mockConfigInstance =  new Instance("fakeChannel", new Instance.Comment("description",
+        final Instance mockConfigInstance = new Instance(true, "", "fakeChannel", new Instance.Comment("description",
                 true, Lists.newArrayList(new Instance.Comment.CommentRule("foo", "bar"))),
                 "new-video", new Instance.RedditCredentials("fake", "fake",
                 "fake", "foobar"), Lists.newArrayList("foobar"), "fake", null,
@@ -80,7 +80,7 @@ public class YoutubeLinkReplacerTest {
         when(mockHistoryManager.getHistory()).thenReturn(new ArrayList<>());
 
         //config instance
-        final Instance fakeConfigInstance =  new Instance("fakeChannel", new Instance.Comment("description",
+        final Instance fakeConfigInstance = new Instance(true, "", "fakeChannel", new Instance.Comment("description",
                 true, Lists.newArrayList(new Instance.Comment.CommentRule("foo", "bar"))),
                 "new-video", new Instance.RedditCredentials("fake", "fake",
                 "fake", "foobar"), Lists.newArrayList("foobar"), "fake", null,
