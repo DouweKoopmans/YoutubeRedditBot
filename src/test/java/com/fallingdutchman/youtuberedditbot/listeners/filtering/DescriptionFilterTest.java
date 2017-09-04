@@ -63,7 +63,9 @@ public class DescriptionFilterTest {
         return Arrays.asList(new Object[][]{
                 {"user/" + channelName},
                 {channelName},
-                {"channel/" + channelId}
+                {"channel/" + channelId},
+                {channelName.toUpperCase()},
+                {"user/" + channelName.toUpperCase()}
         });
     }
 }
