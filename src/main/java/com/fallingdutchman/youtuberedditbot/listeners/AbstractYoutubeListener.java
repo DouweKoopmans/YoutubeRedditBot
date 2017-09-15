@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -42,7 +43,7 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
     protected final AppConfig config;
     private List<YoutubeVideo> videos = Lists.newArrayList();
     @Getter(AccessLevel.PRIVATE)
-    @Setter LocalDateTime latestVideo = LocalDateTime.now();
+    LocalDateTime latestVideo = LocalDateTime.now();
     Timer timer;
     @Getter
     @Setter(AccessLevel.PROTECTED)
@@ -138,6 +139,12 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
 
                 final List<YoutubeVideo> youtubeVideos = this.videos.subList(0, entries);
 
+                if (youtubeVideos.size() > 1) {
+                    // reverse list of entries so oldest video is processed first, if this is not done the latest video date
+                    // will be set to the oldest video we just found instead of the newest
+                    Collections.reverse(youtubeVideos);
+                }
+
                 youtubeVideos.forEach(youtubeVideo -> this.setLatestVideo(youtubeVideo.getPublishDate()));
                 youtubeVideos.stream()
                         .filter(this.filter)
@@ -177,5 +184,11 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
             }
         }
         return i;
+    }
+
+    public void setLatestVideo(LocalDateTime latestVideo) {
+        if (latestVideo.isAfter(getLatestVideo())) {
+            this.latestVideo = latestVideo;
+        }
     }
 }
