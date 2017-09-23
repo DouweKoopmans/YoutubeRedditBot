@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  */
 @Value
 @ToString(exclude = "description")
-public final class YoutubeVideo implements Comparable<YoutubeVideo>{
+public final class Video implements Comparable<Video>{
     @NonNull String videoTitle;
     @NonNull String videoId;
     @NonNull URL url;
@@ -20,7 +20,7 @@ public final class YoutubeVideo implements Comparable<YoutubeVideo>{
     @NonNull String description;
 
     @Override
-    public int compareTo(@NonNull YoutubeVideo o) {
+    public int compareTo(@NonNull Video o) {
         return o.getPublishDate().compareTo(getPublishDate());
     }
 

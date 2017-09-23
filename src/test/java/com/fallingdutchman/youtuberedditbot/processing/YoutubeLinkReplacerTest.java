@@ -6,8 +6,7 @@ import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.Post;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
-import com.google.api.services.youtube.model.Video;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -33,7 +32,7 @@ public class YoutubeLinkReplacerTest {
     @Test
     public void replaceYtLinkInHistory() throws Exception {
         List<Post> mockPosts = new ArrayList<>();
-        mockPosts.add(new Post(new YoutubeVideo("title", "GYVcte-6RPg",
+        mockPosts.add(new Post(new Video("title", "GYVcte-6RPg",
                 new URL("http://www.youtube.com/watch?v=GYVcte-6RPg"), LocalDateTime.now(),
                 "www.youtube.com/watch?v=GYVcte-6RPg"), "reddit.com/foobar"));
 
@@ -55,12 +54,12 @@ public class YoutubeLinkReplacerTest {
         final RedditManagerRegistry mockRedditManagerRegistry = mock(RedditManagerRegistry.class);
         when(mockRedditManagerRegistry.getManager("foobar")).thenReturn(null);
 
-        final YoutubeVideo mockVideo = new YoutubeVideo("", "", new URL("http://google.com"),
+        final Video mockVideo = new Video("", "", new URL("http://google.com"),
                 LocalDateTime.now(), "");
 
         final YoutubeManager mockYtManager = mock(YoutubeManager.class);
 
-        final YoutubeProcessor processor = new YoutubeProcessor(mockVideo, mockConfigInstance,
+        final VideoProcessor processor = new VideoProcessor(mockVideo, mockConfigInstance,
                 mockAppconfig, mockRedditManagerRegistry, mockHistoryManager, mockYtManager);
 
         final String testDescription = "www.youtube.com/watch?v=GYVcte-6RPg";
@@ -97,16 +96,16 @@ public class YoutubeLinkReplacerTest {
         when(mockRedditManagerRegistry.getManager("foobar")).thenReturn(null);
 
         //Youtube Video
-        final YoutubeVideo fakeVideo = new YoutubeVideo("", "", new URL("http://google.com"), LocalDateTime.now(), "");
+        final Video fakeVideo = new Video("", "", new URL("http://google.com"), LocalDateTime.now(), "");
 
         //Youtube Manager
         final VideoSnippet videoSnippet = new VideoSnippet().setTitle(videoTitle);
-        final Video testVideo = new Video().setSnippet(videoSnippet);
+        final com.google.api.services.youtube.model.Video testVideo = new com.google.api.services.youtube.model.Video().setSnippet(videoSnippet);
         final YoutubeManager mockYtManager = mock(YoutubeManager.class);
         when(mockYtManager.getVideoDataFromVideoId(eq(videoId), anyString())).thenReturn(Optional.of(testVideo));
 
         //Youtube Processor
-        final YoutubeProcessor processor = new YoutubeProcessor(fakeVideo, fakeConfigInstance, fakeAppConfig,
+        final VideoProcessor processor = new VideoProcessor(fakeVideo, fakeConfigInstance, fakeAppConfig,
                 mockRedditManagerRegistry, mockHistoryManager, mockYtManager);
 
         final String testDescription = "http://www.youtube.com/watch?v=" + videoId;
@@ -117,7 +116,7 @@ public class YoutubeLinkReplacerTest {
 
     @Test
     public void testYoutubePattern() throws Exception {
-        final Pattern testPattern = Pattern.compile(YoutubeProcessor.youtubeLinkPattern);
+        final Pattern testPattern = Pattern.compile(VideoProcessor.youtubeLinkPattern);
         final Set<String> positiveTestStrings = new HashSet<>();
         final Set<String> negativeTestStrings = new HashSet<>();
 

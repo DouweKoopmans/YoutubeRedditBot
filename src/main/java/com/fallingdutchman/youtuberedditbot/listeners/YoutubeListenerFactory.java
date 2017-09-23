@@ -10,4 +10,6 @@ public interface YoutubeListenerFactory {
     YoutubeRssFeedListener createRss(Instance instance);
 
     YoutubeApiListener createApi(Instance instance);
+
+    TwitchApiListener createTwitch(Instance instance);
 }

@@ -9,11 +9,11 @@ import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.Post;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
-import com.google.api.services.youtube.model.Video;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.overzealous.remark.Remark;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.Synchronized;
@@ -33,11 +33,12 @@ import java.util.regex.Pattern;
 /**
  * Created by douwe on 2-10-16.
  */
+// TODO: 23-9-17 replace Twitch links
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class YoutubeProcessor {
-    protected static String youtubeLinkPattern = "(?:https?://)?(?:www\\.)?youtu(?:be\\.com/watch\\?v=|\\.be/)([-_A-Za-z0-9]{10}[AEIMQUYcgkosw048])";
-    YoutubeVideo video;
+public class VideoProcessor {
+    protected static final String youtubeLinkPattern = "(?:https?://)?(?:www\\.)?youtu(?:be\\.com/watch\\?v=|\\.be/)([-_A-Za-z0-9]{10}[AEIMQUYcgkosw048])";
+    Video video;
     RedditManager reddit;
     Instance configInstance;
     FormatterFactory formatterFactory;
@@ -45,9 +46,9 @@ public class YoutubeProcessor {
     YoutubeManager youtubeManager;
 
     @Inject
-    public YoutubeProcessor(@Assisted @NonNull YoutubeVideo video, @NonNull @Assisted Instance configInstance,
-                            @NonNull AppConfig config, @NonNull RedditManagerRegistry redditRegistry,
-                            @NonNull HistoryManager historyManager, @NonNull YoutubeManager youtubeManager) {
+    public VideoProcessor(@Assisted @NonNull Video video, @NonNull @Assisted Instance configInstance,
+                          @NonNull AppConfig config, @NonNull RedditManagerRegistry redditRegistry,
+                          @NonNull HistoryManager historyManager, @NonNull YoutubeManager youtubeManager) {
         this.video = video;
         this.historyManager = historyManager;
         this.youtubeManager = youtubeManager;
@@ -78,7 +79,7 @@ public class YoutubeProcessor {
     }
 
     @Synchronized
-    private Optional<Submission> postVideo(String subreddit, boolean selfPost) {
+    protected Optional<Submission> postVideo(String subreddit, boolean selfPost) {
         if (selfPost) {
             throw new UnsupportedOperationException("self posts are not supported");
         } else {
@@ -112,7 +113,7 @@ public class YoutubeProcessor {
         }
     }
 
-    private synchronized Optional<String> postComment(Submission submission, String formatPath) {
+    protected synchronized Optional<String> postComment(Submission submission, String formatPath) {
         final String commentText;
         try {
             commentText = generateCommentText(formatPath);
@@ -152,6 +153,10 @@ public class YoutubeProcessor {
         String description = video.getDescription();
         description = replaceYtLinks(description);
 
+        if (configInstance.getType().equalsIgnoreCase("twitch")) {
+            description = new Remark().convert(description);
+        }
+
         for (Instance.Comment.CommentRule commentRule : configInstance.getComment().getRules()) {
             description = description.replaceAll(commentRule.getFind(), commentRule.getReplace());
         }
@@ -176,13 +181,13 @@ public class YoutubeProcessor {
 
             if (historyResult.isPresent()) {
                 final Post post = historyResult.get();
-                final YoutubeVideo postVideo = post.getVideo();
+                final Video postVideo = post.getVideo();
 
                 result = description.replace(matcher.group(), String.format("[%s](%s) \n" +
                                 "[ ^^\\(reddit ^^discussion)](%s)  ", postVideo.getVideoTitle(), postVideo.getUrl().toExternalForm(),
                         post.getPermaLink()));
             } else try {
-                final Optional<Video> videoData;
+                final Optional<com.google.api.services.youtube.model.Video> videoData;
                 videoData = this.youtubeManager.getVideoDataFromVideoId(matcher.group(1), configInstance.getYoutubeApiKey());
                 if (videoData.isPresent()) {
                     result = description.replace(matcher.group(), String.format("[%s](%s) \n",

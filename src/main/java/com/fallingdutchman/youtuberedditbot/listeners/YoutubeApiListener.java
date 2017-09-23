@@ -7,7 +7,7 @@ import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
 import com.google.api.client.util.Lists;
 import com.google.api.services.youtube.model.Channel;
@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @EqualsAndHashCode(callSuper = true, doNotUseGetters = true)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
+public class YoutubeApiListener extends AbstractVideoListener<PlaylistItem> {
     AppConfig.YoutubeConfig youtubeConfig;
     YoutubeManager youtubeManager;
 
@@ -82,7 +82,7 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
     }
 
     @Override
-    public YoutubeVideo extract(@NonNull final PlaylistItem target) {
+    public Video extract(@NonNull final PlaylistItem target) {
         URL url;
         try {
             url = new URL("https://www.youtube.com/watch?v=" + target.getSnippet().getResourceId().getVideoId());
@@ -96,6 +96,6 @@ public class YoutubeApiListener extends AbstractYoutubeListener<PlaylistItem> {
         val videoTitle = target.getSnippet().getTitle();
         val publishDate = YrbUtils.dateTimeToLocalDateTime(target.getSnippet().getPublishedAt());
 
-        return new YoutubeVideo(videoTitle, videoId, url, publishDate, description);
+        return new Video(videoTitle, videoId, url, publishDate, description);
     }
 }

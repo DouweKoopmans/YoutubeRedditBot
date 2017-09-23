@@ -6,7 +6,7 @@ import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
 import com.google.common.collect.Lists;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 public class ListenerTest {
 
     public static class UnitTests {
-        AbstractYoutubeListener<?> listener;
+        AbstractVideoListener<?> listener;
 
         @Before
         public void setUp() throws Exception {
@@ -69,15 +69,15 @@ public class ListenerTest {
             final LocalDateTime future = LocalDateTime.now().plusMinutes(2);
             final LocalDateTime past = LocalDateTime.now().minusMinutes(2);
 
-            YoutubeVideo entry1 = new YoutubeVideo("", "", new URL("http://www.google.com"), future, "");
-            YoutubeVideo entry2 = new YoutubeVideo("", "", new URL("http://www.google.com"), past, "");
+            Video entry1 = new Video("", "", new URL("http://www.google.com"), future, "");
+            Video entry2 = new Video("", "", new URL("http://www.google.com"), past, "");
 
-            List<YoutubeVideo> entries = Lists.newArrayList(entry1, entry2);
+            List<Video> entries = Lists.newArrayList(entry1, entry2);
 
             assertEquals(1, listener.scanForNewEntries(entries));
 
             entries.remove(entry1);
-            entry1 = new YoutubeVideo("", "", new URL("http://www.google.com"), past, "");
+            entry1 = new Video("", "", new URL("http://www.google.com"), past, "");
             entries.add(entry1);
 
             assertEquals(0, listener.scanForNewEntries(entries));
@@ -133,7 +133,7 @@ public class ListenerTest {
 
         @Test
         public void testRssExtract() throws Exception {
-            YoutubeVideo expected = new YoutubeVideo("Nerd³ Completes... Watch Dogs 2 - 18 - Marcus Kart", "4iwPS-L3dJc",
+            Video expected = new Video("Nerd³ Completes... Watch Dogs 2 - 18 - Marcus Kart", "4iwPS-L3dJc",
                     new URL("http://www.youtube.com/watch?v=4iwPS-L3dJc"),
                     LocalDateTime.of(2017, 1, 11, 20, 0, 0), "\n                HACK_THE_PLANET GaMe_LINk: https://www.ubisoft.com/en-US/game/watch-dogs-2 NERd³_SiTE http://nerdcubed.co.uk NeRd³_PAtrEon: https://www.patreon.com/nerdcubed DAd³_ChaNNeL: http://www.youtube.com/user/OfficialDadCubed TOy_ChanNEL: http://www.youtube.com/user/Officiallynerdcubed TwITCh: http://www.twitch.tv/nerdcubed TwittEr: https://twitter.com/Dannerdcubed MeRCh! ThinGS: http://www.gametee.co.uk/category/nerdcubed OtHer_Things: https://store.dftba.com/collections/nerdcubed JuNK_Things: https://shop.spreadshirt.co.uk/nerdcubed/\n            ");
 

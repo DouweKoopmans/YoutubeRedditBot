@@ -2,7 +2,7 @@ package com.fallingdutchman.youtuberedditbot.history;
 
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Post;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -12,13 +12,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import net.dean.jraw.models.Submission;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,7 +42,7 @@ public class HistoryManager {
         this.history = loadHistory(listFilesFromFolder(historyConfig.getFolder()));
     }
 
-    public void addPost(@NonNull final YoutubeVideo video, @NonNull final Submission submission) throws IOException {
+    public void addPost(@NonNull final Video video, @NonNull final Submission submission) throws IOException {
         addPost(new Post(video, submission.getPermalink()));
     }
 

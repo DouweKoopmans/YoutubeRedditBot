@@ -7,9 +7,9 @@ import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.VideoFilter;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
-import com.fallingdutchman.youtuberedditbot.processing.YoutubeProcessor;
+import com.fallingdutchman.youtuberedditbot.processing.VideoProcessor;
 import com.google.api.client.util.Lists;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -32,7 +32,7 @@ import java.util.TimerTask;
 @ToString(exclude = {"timer", "redditManager"}, doNotUseGetters = true)
 @EqualsAndHashCode(exclude = "timer", callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public abstract class AbstractYoutubeListener<E> extends TimerTask{
+public abstract class AbstractVideoListener<E> extends TimerTask{
 
     @Getter
     final Instance instance;
@@ -41,7 +41,7 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
     final VideoFilter filter;
     final HistoryManager historyManager;
     protected final AppConfig config;
-    private List<YoutubeVideo> videos = Lists.newArrayList();
+    private List<Video> videos = Lists.newArrayList();
     @Getter(AccessLevel.PRIVATE)
     LocalDateTime latestVideo = LocalDateTime.now();
     Timer timer;
@@ -51,9 +51,9 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
 
 
     @Inject
-    AbstractYoutubeListener(@Assisted @NonNull Instance configInstance, ProcessorFactory processorFactory,
-                            AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory,
-                            HistoryManager historyManager) {
+    AbstractVideoListener(@Assisted @NonNull Instance configInstance, ProcessorFactory processorFactory,
+                          AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory,
+                          HistoryManager historyManager) {
         this.instance = configInstance;
         this.filter = filterFactory.create(instance);
         this.processorFactory = processorFactory;
@@ -70,7 +70,7 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
 
         setListening(true);
 
-        log.info("starting up new listener for {}", getInstance().getChannelId());
+        log.info("starting up new listener for {}", getInstance().getName());
         timer = new Timer();
         redditManager.authenticate(instance.getRedditCredentials());
 
@@ -98,22 +98,22 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
         }
     }
 
-    protected final synchronized List<YoutubeVideo> getVideos() {
+    protected final synchronized List<Video> getVideos() {
         return ImmutableList.copyOf(videos);
     }
 
-    final synchronized void setVideos(List<YoutubeVideo> list) {
+    final synchronized void setVideos(List<Video> list) {
         this.videos.clear();
         videos = list;
     }
 
     @Nullable
-    public abstract YoutubeVideo extract(@NonNull E target);
+    public abstract Video extract(@NonNull E target);
 
     protected boolean onListen() {
         if (!this.videos.isEmpty()) {
-            val youtubeVideo = this.videos.get(0);
-            this.setLatestVideo(youtubeVideo.getPublishDate());
+            val video = this.videos.get(0);
+            this.setLatestVideo(video.getPublishDate());
         }
 
         return true;
@@ -122,9 +122,9 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
     protected abstract boolean update();
 
 
-    private void handleNewVideo(@NonNull final YoutubeVideo video) {
+    private void handleNewVideo(@NonNull final Video video) {
         log.info("found a new video, \n {}", video.toString());
-        final YoutubeProcessor processor = processorFactory.create(this.instance, video);
+        final VideoProcessor processor = processorFactory.create(this.instance, video);
         getInstance().getSubreddit().forEach(processor::processVideo);
     }
 
@@ -137,16 +137,16 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
             if (entries > 0) {
                 log.debug("poller for {} has found {} new videos", getInstance().getChannelId(), entries);
 
-                final List<YoutubeVideo> youtubeVideos = this.videos.subList(0, entries);
+                final List<Video> newVideos = this.videos.subList(0, entries);
 
-                if (youtubeVideos.size() > 1) {
+                if (newVideos.size() > 1) {
                     // reverse list of entries so oldest video is processed first, if this is not done the latest video date
                     // will be set to the oldest video we just found instead of the newest
-                    Collections.reverse(youtubeVideos);
+                    Collections.reverse(newVideos);
                 }
 
-                youtubeVideos.forEach(youtubeVideo -> this.setLatestVideo(youtubeVideo.getPublishDate()));
-                youtubeVideos.stream()
+                newVideos.forEach(video -> this.setLatestVideo(video.getPublishDate()));
+                newVideos.stream()
                         .filter(this.filter)
                         .forEach(this::handleNewVideo);
             }
@@ -172,10 +172,10 @@ public abstract class AbstractYoutubeListener<E> extends TimerTask{
      * @param entries the list of entries to scan
      * @return the number of new entries
      */
-    final int scanForNewEntries(@NonNull final List<YoutubeVideo> entries) {
+    final int scanForNewEntries(@NonNull final List<Video> entries) {
         int i = 0;
 
-        for (YoutubeVideo entry : entries) {
+        for (Video entry : entries) {
             if (entry.getPublishDate().isAfter(this.getLatestVideo())) {
                 i++;
             }

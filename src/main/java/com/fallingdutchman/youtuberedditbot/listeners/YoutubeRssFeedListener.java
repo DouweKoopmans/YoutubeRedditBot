@@ -6,7 +6,7 @@ import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @ToString(doNotUseGetters = true, callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEntry> {
+public final class YoutubeRssFeedListener extends AbstractVideoListener<SyndEntry> {
 
     @Inject
     public YoutubeRssFeedListener(@Assisted Instance instance, ProcessorFactory processorFactory, AppConfig config,
@@ -40,7 +40,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
     }
 
     @Override
-    public YoutubeVideo extract(@NonNull final SyndEntry entry) {
+    public Video extract(@NonNull final SyndEntry entry) {
         URL url;
         try {
             url = new URL(entry.getLink());
@@ -81,7 +81,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             description = des.get();
         }
 
-        return new YoutubeVideo(entry.getTitle(), videoId, url, publishDate, description);
+        return new Video(entry.getTitle(), videoId, url, publishDate, description);
     }
 
     @Synchronized
