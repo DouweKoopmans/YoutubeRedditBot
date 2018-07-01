@@ -3,15 +3,14 @@ package com.fallingdutchman.youtuberedditbot.listeners;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
 import com.fallingdutchman.youtuberedditbot.authentication.youtube.YoutubeManager;
-import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
-import com.google.api.client.util.Lists;
 import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.PlaylistItem;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import lombok.*;
@@ -22,9 +21,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Objects;
-
-import static java.util.stream.Collectors.toList;
+import java.util.Optional;
 
 /**
  * Created by douwe on 19-10-16.
@@ -39,56 +36,48 @@ public class YoutubeApiListener extends AbstractVideoListener<PlaylistItem> {
     @Inject
     public YoutubeApiListener(@Assisted @NonNull Instance instance, ProcessorFactory processorFactory,
                               @NonNull AppConfig config, RedditManagerRegistry redditRegistry, FilterFactory filterFactory,
-                              HistoryManager historyManager, YoutubeManager youtubeManager) {
-        super(instance, processorFactory, config, redditRegistry, filterFactory, historyManager);
-
+                              YoutubeManager youtubeManager) {
+        super(instance, processorFactory, config, redditRegistry, filterFactory);
         this.youtubeManager = youtubeManager;
         this.youtubeConfig = config.getYoutubeConfig();
     }
 
     @Synchronized
     @Override
-    public boolean update() {
+    public Optional<List<PlaylistItem>> update() {
         if (!config.getYoutubeConfig().isUpdate())
-            return true;
+            return Optional.of(Lists.newArrayList());
 
         try {
-            List<Channel> channelsList = youtubeManager.listChannelsFromChannelId(getInstance().getChannelId(),
+            List<Channel> channelsList = youtubeManager.getChannelFromId(getInstance().getChannelId(),
                     getInstance().getYoutubeApiKey());
 
             if (channelsList != null && !channelsList.isEmpty()) {
                 val uploadPlaylistId = channelsList.get(0).getContentDetails().getRelatedPlaylists().getUploads();
 
-                List<PlaylistItem> result = Lists.newArrayList();
+                List<PlaylistItem> result = youtubeManager.getVideosFromPlaylist(uploadPlaylistId,
+                        getInstance().getYoutubeApiKey());
 
-                result.addAll(youtubeManager.listAllVideosFromPlayList(uploadPlaylistId, getInstance().getYoutubeApiKey()));
-
-                setVideos(result.stream()
-                        .map(this::extract)
-                        .filter(Objects::nonNull)
-                        .sorted()
-                        .collect(toList()));
-                result.clear();
-                return true;
+                return Optional.of(result);
             } else {
                 log.warn("was unable to find any channels by this id ({}), please make sure this is correct",
                         getInstance().getChannelId());
-                return false;
+                return Optional.empty();
             }
         } catch (IOException e) {
             log.error("an error occurred polling the youtube api", e);
-            return false;
+            return Optional.empty();
         }
     }
 
     @Override
-    public Video extract(@NonNull final PlaylistItem target) {
+    public Optional<Video> extract(@NonNull final PlaylistItem target) {
         URL url;
         try {
             url = new URL("https://www.youtube.com/watch?v=" + target.getSnippet().getResourceId().getVideoId());
         } catch (MalformedURLException e) {
             log.error("url on target entry is malformed", e);
-            return null;
+            return Optional.empty();
         }
 
         val description = target.getSnippet().getDescription();
@@ -96,6 +85,6 @@ public class YoutubeApiListener extends AbstractVideoListener<PlaylistItem> {
         val videoTitle = target.getSnippet().getTitle();
         val publishDate = YrbUtils.dateTimeToLocalDateTime(target.getSnippet().getPublishedAt());
 
-        return new Video(videoTitle, videoId, url, publishDate, description);
+        return Optional.of(new Video(videoTitle, videoId, url, publishDate, description));
     }
 }

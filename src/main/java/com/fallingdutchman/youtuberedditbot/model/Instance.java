@@ -29,6 +29,7 @@ public class Instance {
     @NonNull String type;
     @Nullable String twitchClientId;
     @Nullable String collectionTarget;
+    @Nullable String channelTarget;
 
     @Value
     public static class Target {
@@ -116,10 +117,11 @@ public class Instance {
         val target = YrbUtils.getOptionalConfig(c, "target").map(Target::of).orElse(null);
         val twitchClientApi = YrbUtils.getPathOrDefault(c, "twitch-client-id", null);
         val collectionTarget = YrbUtils.getPathOrDefault(c, "collectionTarget", null);
+        val channelTarget = YrbUtils.getPathOrDefault(c, "channelTarget", null);
         val type = YrbUtils.getPathOrDefault(c, "type", "youtube");
 
         val instance = new Instance(enabled, name, channelId, comment, pollerType, redditCredentials, subreddit, youtubeApiKey,
-                target, interval, listenerType, type, twitchClientApi, collectionTarget);
+                target, interval, listenerType, type, twitchClientApi, collectionTarget, channelTarget);
 
         return sanityCheck(instance);
     }
@@ -130,7 +132,7 @@ public class Instance {
      * @return the instance that was referenced
      * @throws IllegalArgumentException if a required element of the instance is missing
      */
-    private static Instance sanityCheck(final Instance instance) throws IllegalArgumentException {
+    private static Instance sanityCheck(final Instance instance) {
         if (instance.getType().equalsIgnoreCase("youtube")) {
             if (instance.getChannelId() == null) {
                 throw new IllegalArgumentException("channelId can not be null for type \"youtube\"");
@@ -152,7 +154,7 @@ public class Instance {
                 throw new IllegalArgumentException("target can not be null for description-mention poller for type " +
                         "\"youtube\"");
             }
-        } else if (instance.getType().equalsIgnoreCase("twitch")) {
+        } else if (instance.getType().equalsIgnoreCase("twitchCollection") || instance.getType().equalsIgnoreCase("twitchVideo")) {
             if (instance.getTwitchClientId() == null) {
                 throw new IllegalArgumentException("twitch-client-id can not be null for type \"twitch\"");
             }
@@ -160,12 +162,22 @@ public class Instance {
                 throw new IllegalArgumentException("twitch-client-id can not be empty for type \"twitch\"");
             }
 
-            if (instance.getCollectionTarget() == null) {
-                throw new IllegalArgumentException("collectionTarget can not be null for type \"twitch\"");
-            }
+            if (instance.getType().equalsIgnoreCase("twitchCollection")) {
+                if (instance.getCollectionTarget() == null) {
+                    throw new IllegalArgumentException("collectionTarget can not be null for type \"twitchCollection\"");
+                }
 
-            if (instance.getCollectionTarget().isEmpty()) {
-                throw new IllegalArgumentException("collectionTarget can not be empty for type \"twitch\"");
+                if (instance.getCollectionTarget().isEmpty()) {
+                    throw new IllegalArgumentException("collectionTarget can not be empty for type \"twitchCollection\"");
+                }
+            } else {
+                if (instance.getChannelTarget() == null) {
+                    throw new IllegalArgumentException("channelTarget can not be null for type \"twitchVideo\"");
+                }
+
+                if (instance.getChannelTarget().isEmpty()) {
+                    throw new IllegalArgumentException("channelTarget can not be empty for type \"twitchVideo\"");
+                }
             }
         } else {
             throw new IllegalArgumentException(String.format("\"%s\" is not a valid type", instance.getType()));

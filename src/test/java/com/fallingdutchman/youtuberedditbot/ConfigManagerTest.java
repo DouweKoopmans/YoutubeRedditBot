@@ -29,12 +29,12 @@ public class ConfigManagerTest {
                         true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
                         "new-video", new Instance.RedditCredentials("fake", "fake",
                         "fake", "fake"), Lists.newArrayList("foobar"), "fake", null,
-                        1, "api"),
+                        1, "api", "youtube", null, null, null),
                 new Instance(true, "fakeChannel", "channel1", new Comment("description",
                         true, Lists.newArrayList(new Comment.CommentRule("foo", "bar"))),
                         "description-mention", new Instance.RedditCredentials("fake", "fake",
                         "fake", "fake"), Lists.newArrayList("foobar"), "fake", new Instance.Target("name", "channel2"),
-                        1, "api")
+                        1, "api", "youtube", null, null, null)
         );
 
         final Config config = ConfigManager.prepareConfig(ConfigFactory.parseResources("test-bots.conf"));

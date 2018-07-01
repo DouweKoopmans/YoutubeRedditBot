@@ -2,7 +2,6 @@ package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManager;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
-import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.VideoFilter;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
@@ -10,20 +9,23 @@ import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
 import com.fallingdutchman.youtuberedditbot.processing.VideoProcessor;
-import com.google.api.client.util.Lists;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Created by douwe on 19-10-16.
@@ -32,16 +34,14 @@ import java.util.TimerTask;
 @ToString(exclude = {"timer", "redditManager"}, doNotUseGetters = true)
 @EqualsAndHashCode(exclude = "timer", callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public abstract class AbstractVideoListener<E> extends TimerTask{
-
+public abstract class AbstractVideoListener<E> extends TimerTask {
     @Getter
     final Instance instance;
     final RedditManager redditManager;
-    final ProcessorFactory processorFactory;
+    private final VideoProcessor processor;
     final VideoFilter filter;
-    final HistoryManager historyManager;
     protected final AppConfig config;
-    private List<Video> videos = Lists.newArrayList();
+    private final List<Video> videos;
     @Getter(AccessLevel.PRIVATE)
     LocalDateTime latestVideo = LocalDateTime.now();
     Timer timer;
@@ -52,18 +52,17 @@ public abstract class AbstractVideoListener<E> extends TimerTask{
 
     @Inject
     AbstractVideoListener(@Assisted @NonNull Instance configInstance, ProcessorFactory processorFactory,
-                          AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory,
-                          HistoryManager historyManager) {
+                          AppConfig config, RedditManagerRegistry redditManagerRegistry, FilterFactory filterFactory) {
         this.instance = configInstance;
+        this.processor = processorFactory.create(this.instance);
         this.filter = filterFactory.create(instance);
-        this.processorFactory = processorFactory;
         this.redditManager = redditManagerRegistry.getManager(instance.getRedditCredentials().getRedditUsername());
         this.config = config;
-        this.historyManager = historyManager;
+        this.videos = Lists.newArrayList();
     }
 
 
-    public final void listen() {
+    public final void listen() throws Exception {
         if (isListening()) {
             throw new IllegalStateException("listener is already listening");
         }
@@ -71,18 +70,16 @@ public abstract class AbstractVideoListener<E> extends TimerTask{
         setListening(true);
 
         log.info("starting up new listener for {}", getInstance().getName());
-        timer = new Timer();
-        redditManager.authenticate(instance.getRedditCredentials());
+        timer = new Timer(instance.getName());
 
         try {
-            if (update() && onListen()) {
-                val period = (long) (getInstance().getInterval() * config.getListenerConfig().getIntervalStep());
-                timer.schedule(this, 0, period * 1000);
-            } else {
-                log.warn("was unable to initiate the feed will not start the poller for {}", this.toString());
-            }
+            onListen();
+            val period = (long) (getInstance().getInterval() * config.getListenerConfig().getIntervalStep());
+            timer.schedule(this, 0, period * 1000);
         } catch (Exception e) {
-            log.error("an error occurred whilst trying to Listen to the feed: ", e);
+            log.error("was unable to start listener for instance: " + instance.getName() + " because an " +
+                    "exception was thrown", e);
+            throw new Exception(e);
         }
     }
 
@@ -103,92 +100,72 @@ public abstract class AbstractVideoListener<E> extends TimerTask{
     }
 
     final synchronized void setVideos(List<Video> list) {
-        this.videos.clear();
-        videos = list;
+        videos.clear();
+        videos.addAll(list);
     }
 
-    @Nullable
-    public abstract Video extract(@NonNull E target);
-
-    protected boolean onListen() {
+    /**
+     * called when starting listener.
+     * <p>
+     * override this method to add additional functionality when starting the listener. throw a RuntimeException
+     * when for some reason the listener shouldn't or couldn't be started.
+     *
+     * @throws Exception when this listener shouldn't of couldn't start.
+     */
+    protected void onListen() throws Exception {
         if (!this.videos.isEmpty()) {
             val video = this.videos.get(0);
             this.setLatestVideo(video.getPublishDate());
         }
-
-        return true;
     }
 
-    protected abstract boolean update();
+    protected abstract Optional<List<E>> update();
 
+    public abstract Optional<Video> extract(E target);
 
-    private void handleNewVideo(@NonNull final Video video) {
+    void handleNewVideo(@NonNull Video video) {
         log.info("found a new video, \n {}", video.toString());
-        final VideoProcessor processor = processorFactory.create(this.instance, video);
-        getInstance().getSubreddit().forEach(processor::processVideo);
+        getInstance().getSubreddit().forEach(subreddit -> this.processor.processVideo(video, subreddit));
     }
 
     @Override
     public final void run() {
-        val startTime = System.currentTimeMillis();
-        if (this.update()) {
-            val entries = scanForNewEntries(getVideos());
+        val stopwatch = Stopwatch.createStarted();
+        final Optional<List<E>> update = this.update();
+        update.ifPresent(updated -> {
+            setVideos(processUpdate(updated));
 
-            if (entries > 0) {
-                log.debug("poller for {} has found {} new videos", getInstance().getChannelId(), entries);
+            val videosFiltered = getVideos().stream().filter(video -> video.getPublishDate().isAfter(this.getLatestVideo()))
+                    .collect(Collectors.toList());
 
-                final List<Video> newVideos = this.videos.subList(0, entries);
-
-                if (newVideos.size() > 1) {
-                    // reverse list of entries so oldest video is processed first, if this is not done the latest video date
-                    // will be set to the oldest video we just found instead of the newest
-                    Collections.reverse(newVideos);
-                }
-
-                newVideos.forEach(video -> this.setLatestVideo(video.getPublishDate()));
-                newVideos.stream()
-                        .filter(this.filter)
-                        .forEach(this::handleNewVideo);
+            if (videosFiltered.size() > 0) {
+                log.debug("poller for {} has found {} new videos", getInstance().getName(), videosFiltered.size());
             }
 
-        } else {
-            log.warn("something went wrong updating the feed, will not run poller");
-        }
+            videosFiltered.stream().findFirst().ifPresent(video -> setLatestVideo(video.getPublishDate()));
+            videosFiltered.stream().filter(this.filter).forEach(this::handleNewVideo);
+            videosFiltered.clear();
+        });
+        val elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
-        String latestVideoId;
-
-        if (this.videos.isEmpty()) {
-          latestVideoId = null;
-        } else {
-          latestVideoId = this.videos.get(0).getVideoId();
-        }
-
-        log.debug("finished polling in {} milliseconds. latest entry:  {id={}, date={}}",
-                System.currentTimeMillis() - startTime, latestVideoId, getLatestVideo());
+        this.getVideos().stream().findFirst().ifPresent(video ->
+                log.debug("finished polling in {} milliseconds. latest entry:  {id={}, date={}}",
+                        elapsed, video.getVideoId(), video.getPublishDate()));
     }
 
-    /**
-     * scan for new entries
-     * @param entries the list of entries to scan
-     * @return the number of new entries
-     */
-    final int scanForNewEntries(@NonNull final List<Video> entries) {
-        int i = 0;
-
-        for (Video entry : entries) {
-            if (entry.getPublishDate().isAfter(this.getLatestVideo())) {
-                i++;
-            }
-            else if (entry.getPublishDate().isEqual(this.getLatestVideo())) {
-                break; //when we find the "latest date" we know that every entry after that will be older an thus irrelevant
-            }
-        }
-        return i;
-    }
-
-    public void setLatestVideo(LocalDateTime latestVideo) {
+    protected void setLatestVideo(LocalDateTime latestVideo) {
         if (latestVideo.isAfter(getLatestVideo())) {
             this.latestVideo = latestVideo;
         }
+    }
+
+    private List<Video> processUpdate(List<E> update) {
+        return update.stream()
+                .filter(Objects::nonNull)
+                .map(this::extract)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot;
 
 import com.fallingdutchman.youtuberedditbot.listeners.AbstractVideoListener;
-import com.fallingdutchman.youtuberedditbot.listeners.YoutubeListenerFactory;
+import com.fallingdutchman.youtuberedditbot.listeners.ListenerFactory;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.google.api.client.util.Lists;
 import com.google.inject.Guice;
@@ -21,7 +21,7 @@ import java.util.List;
 public class YoutubeRedditBot {
     final List<AbstractVideoListener> listeners = Lists.newArrayList();
     final ConfigManager configManager;
-    YoutubeListenerFactory listenerFactory;
+    ListenerFactory listenerFactory;
 
     private YoutubeRedditBot() {
         configManager = new ConfigManager();
@@ -43,21 +43,7 @@ public class YoutubeRedditBot {
         log.info("");
         val injector = Guice.createInjector(new YrbModule(configManager.getAppConfig()));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("shutting down!");
-            log.info("----------------------------------------------------");
-            log.info("there are currently {} feeds listening, feeds:", listeners.size());
-            for (int i = 0; i < listeners.size(); i++) {
-                val listener = listeners.get(i);
-
-                log.info("feed {}: ", i + 1);
-                log.info(listener.toString());
-                listener.stopListening();
-            }
-            log.info("----------------------------------------------------");
-        }));
-
-        listenerFactory = injector.getInstance(YoutubeListenerFactory.class);
+        listenerFactory = injector.getInstance(ListenerFactory.class);
 
         val instances = configManager.getInstances();
 
@@ -85,15 +71,32 @@ public class YoutubeRedditBot {
 
         // start listeners
         log.info("starting listeners");
-        listeners.forEach(AbstractVideoListener::listen);
+        listeners.forEach(listener -> {
+            try {
+                listener.listen();
+            } catch (Exception e) {
+                // listener couldn't be started
+            }
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("shutting down!");
+            log.info("----------------------------------------------------");
+            log.info("there are currently {} feeds listening, feeds:", listeners.size());
+            listeners.forEach(listener -> {
+                log.info(listener.toString());
+                listener.stopListening();
+            });
+            log.info("----------------------------------------------------");
+        }));
     }
 
     @NonNull
     private AbstractVideoListener<?> createFeedListener(String type, String listenerType, Instance instance) {
-        if (type.equalsIgnoreCase("twitch")) {
-            // if the bot type (aka "type") is twitch,
-            // always return a twitch specific listener
-            return listenerFactory.createTwitch(instance);
+        if (type.equalsIgnoreCase("twitchCollection")) {
+            return listenerFactory.createTwitchCollections(instance);
+        } else if (type.equalsIgnoreCase("twitchVideo")) {
+            return listenerFactory.createTwitchVideos(instance);
         }
 
         switch (listenerType) {
