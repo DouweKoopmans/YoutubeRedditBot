@@ -1,5 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.authentication.reddit;
 
+import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AccessLevel;
@@ -29,7 +30,15 @@ public class RedditManagerRegistry {
         if (register.containsKey(username)) {
             return register.get(username);
         } else {
-            final RedditManager manager = factory.create(username);
+            throw new IllegalStateException("manager for that username doesn't exist");
+        }
+    }
+
+    public RedditManager addManager(String username, Instance.RedditCredentials credentials) {
+        if (register.containsKey(username)) {
+            return register.get(username);
+        } else {
+            final RedditManager manager = factory.create(username, credentials);
             register.put(username, manager);
             return manager;
         }

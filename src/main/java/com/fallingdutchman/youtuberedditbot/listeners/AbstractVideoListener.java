@@ -56,7 +56,8 @@ public abstract class AbstractVideoListener<E> extends TimerTask {
         this.instance = configInstance;
         this.processor = processorFactory.create(this.instance);
         this.filter = filterFactory.create(instance);
-        this.redditManager = redditManagerRegistry.getManager(instance.getRedditCredentials().getRedditUsername());
+        this.redditManager = redditManagerRegistry.addManager(instance.getRedditCredentials().getRedditUsername(),
+                configInstance.getRedditCredentials());
         this.config = config;
         this.videos = Lists.newArrayList();
     }

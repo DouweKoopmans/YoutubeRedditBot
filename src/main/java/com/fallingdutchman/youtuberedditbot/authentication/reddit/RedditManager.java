@@ -43,7 +43,8 @@ public class RedditManager {
      * standard constructor
      */
     @Inject
-    public RedditManager(@Assisted String username, AppConfig config) {
+    public RedditManager(@Assisted String username, @Assisted Instance.RedditCredentials credentials, AppConfig config) {
+        this.redditCredentials = credentials;
         this.redditConfig = config.getRedditConfig();
         val userAgent = new UserAgent("desktop", redditConfig.getAppId(), redditConfig.getVersion(), username);
         val networkAdapter = new OkHttpNetworkAdapter(userAgent);

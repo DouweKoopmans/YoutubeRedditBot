@@ -39,7 +39,8 @@ public class VideoProcessor {
     @Inject
     public VideoProcessor(@NonNull @Assisted Instance configInstance, @NonNull AppConfig config,
                           @NonNull RedditManagerRegistry redditRegistry) {
-        this.reddit = redditRegistry.getManager(configInstance.getRedditCredentials().getRedditUsername());
+        this.reddit = redditRegistry.addManager(configInstance.getRedditCredentials().getRedditUsername(),
+                configInstance.getRedditCredentials());
         this.configInstance = configInstance;
         this.formatterFactory = new FileFormatterFactory(config);
     }
