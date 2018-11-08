@@ -38,10 +38,10 @@ public abstract class AbstractVideoListener<E> extends TimerTask {
     @Getter
     final Instance instance;
     final RedditManager redditManager;
-    private final VideoProcessor processor;
+    final VideoProcessor processor;
     final VideoFilter filter;
     protected final AppConfig config;
-    private final List<Video> videos;
+    final List<Video> videos;
     @Getter(AccessLevel.PRIVATE)
     LocalDateTime latestVideo = LocalDateTime.now();
     Timer timer;
@@ -88,11 +88,11 @@ public abstract class AbstractVideoListener<E> extends TimerTask {
         if (!isListening()) {
             log.info("stopping listener for {}", getInstance().getChannelId());
             timer.cancel();
-
+            timer.purge();
             timer = null;
             setListening(false);
         } else {
-            throw new IllegalStateException("this listener isn't listening, you can't stop it");
+            throw new IllegalStateException("this listener (" + getInstance().getName() + ") isn't listening, you can't stop it");
         }
     }
 
@@ -131,6 +131,20 @@ public abstract class AbstractVideoListener<E> extends TimerTask {
 
     @Override
     public final void run() {
+        try {
+            this.runTimer();
+        } catch (Exception e) {
+            log.error("something went wrong in the execution cycle", e);
+        }
+    }
+
+    protected void setLatestVideo(LocalDateTime latestVideo) {
+        if (latestVideo.isAfter(getLatestVideo())) {
+            this.latestVideo = latestVideo;
+        }
+    }
+
+    private void runTimer() {
         val stopwatch = Stopwatch.createStarted();
         final Optional<List<E>> update = this.update();
         update.ifPresent(updated -> {
@@ -152,12 +166,6 @@ public abstract class AbstractVideoListener<E> extends TimerTask {
         this.getVideos().stream().findFirst().ifPresent(video ->
                 log.debug("finished polling in {} milliseconds. latest entry:  {id={}, date={}}",
                         elapsed, video.getVideoId(), video.getPublishDate()));
-    }
-
-    protected void setLatestVideo(LocalDateTime latestVideo) {
-        if (latestVideo.isAfter(getLatestVideo())) {
-            this.latestVideo = latestVideo;
-        }
     }
 
     private List<Video> processUpdate(List<E> update) {

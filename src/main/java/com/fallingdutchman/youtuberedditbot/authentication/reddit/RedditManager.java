@@ -106,6 +106,11 @@ public class RedditManager {
             log.debug("explanation: {}", e.getExplanation());
             log.debug("stacktrace: ", e);
             return null;
+        } catch (RuntimeException e) {
+            log.error("RunTimeException was thrown whilst trying to post to /r/{} with title {} and url {}. error message: {}",
+                    subreddit, title, url, e.getLocalizedMessage());
+            log.error("error info", e);
+            return null;
         }
     }
 
@@ -122,11 +127,16 @@ public class RedditManager {
             return submission.inspect();
         } catch (ApiException e) {
             log.error("an API exception occurred whilst trying to submit a post to /r/{} " +
-                    "with the title {} and url {}. error message: {}", subreddit, title, text, e.getLocalizedMessage());
+                    "with the title {} and text {}. error message: {}", subreddit, title, text, e.getLocalizedMessage());
             log.debug("more info on the API error");
             log.debug("reason: {}", e.getExplanation());
             log.debug("explanation: {}", e.getExplanation());
             log.debug("stacktrace: ", e);
+            return null;
+        }  catch (RuntimeException e) {
+            log.error("RunTimeException was thrown whilst trying to post to /r/{} with title {} and text {}. error message: {}",
+                    subreddit, title, text, e.getLocalizedMessage());
+            log.error("error info", e);
             return null;
         }
     }
@@ -155,6 +165,11 @@ public class RedditManager {
             log.debug("reason: {}", e.getExplanation());
             log.debug("explanation: {}", e.getExplanation());
             log.debug("stacktrace: ", e);
+            return null;
+        } catch (RuntimeException e) {
+            log.error("RunTimeException was thrown whilst trying to comment on {}. error message: {}",
+                    submission.getId(), e.getLocalizedMessage());
+            log.error("error info", e);
             return null;
         }
     }
