@@ -132,12 +132,12 @@ task createDockerfile(type: Dockerfile) {
 task buildImage(type: DockerBuildImage) {
     dependsOn createDockerfile
     inputDir = tempDir
-    tag = docker.javaApplication.tag
+    tags.add(docker.javaApplication.tag)
 }
 
 task tagImage(type: DockerTagImage) {
     dependsOn buildImage
-    imageId = "$imageName:$docker.javaApplication.tag"
+    imageId = "$imageName"
     tag = 'latest'
     repository = "$imageName"
 }
