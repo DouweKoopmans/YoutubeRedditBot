@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot;
 
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerFactory;
-import com.fallingdutchman.youtuberedditbot.listeners.YoutubeListenerFactory;
+import com.fallingdutchman.youtuberedditbot.listeners.ListenerFactory;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactoryImpl;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
@@ -24,7 +24,7 @@ class YrbModule extends AbstractModule {
         bind(AppConfig.class).toInstance(appConfig);
         bind(FilterFactory.class).to(FilterFactoryImpl.class);
         install(new FactoryModuleBuilder().build(ProcessorFactory.class));
-        install(new FactoryModuleBuilder().build(YoutubeListenerFactory.class));
+        install(new FactoryModuleBuilder().build(ListenerFactory.class));
         install(new FactoryModuleBuilder().build(RedditManagerFactory.class));
     }
 }

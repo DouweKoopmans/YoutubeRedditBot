@@ -8,7 +8,8 @@ import lombok.Value;
  */
 @Value
 public class Post implements Comparable<Post> {
-    @NonNull YoutubeVideo video;
+    @NonNull
+    Video video;
     @NonNull String permaLink;
 
     @Override

@@ -2,11 +2,10 @@ package com.fallingdutchman.youtuberedditbot.listeners;
 
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.fallingdutchman.youtuberedditbot.authentication.reddit.RedditManagerRegistry;
-import com.fallingdutchman.youtuberedditbot.history.HistoryManager;
 import com.fallingdutchman.youtuberedditbot.listeners.filtering.FilterFactory;
 import com.fallingdutchman.youtuberedditbot.model.AppConfig;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.fallingdutchman.youtuberedditbot.processing.ProcessorFactory;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -23,30 +22,28 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @ToString(doNotUseGetters = true, callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEntry> {
+public final class YoutubeRssFeedListener extends AbstractVideoListener<SyndEntry> {
 
     @Inject
     public YoutubeRssFeedListener(@Assisted Instance instance, ProcessorFactory processorFactory, AppConfig config,
-                                  RedditManagerRegistry redditRegistry, FilterFactory filterFactory,
-                                  HistoryManager historyManager) throws IOException {
-        super(instance, processorFactory, config, redditRegistry, filterFactory, historyManager);
+                                  RedditManagerRegistry redditRegistry, FilterFactory filterFactory) {
+        super(instance, processorFactory, config, redditRegistry, filterFactory);
     }
 
     @Override
-    public YoutubeVideo extract(@NonNull final SyndEntry entry) {
+    public Optional<Video> extract(@NonNull final SyndEntry entry) {
         URL url;
         try {
             url = new URL(entry.getLink());
         } catch (MalformedURLException e) {
             log.error("url on found entry is malformed", e);
-            return null;
+            return Optional.empty();
         }
         String videoId;
         String description = "";
@@ -61,7 +58,7 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             videoId = optionalVideoId.get().getValue();
         } else {
             log.error("was not able to extract a videoId in feed entry {}", entry.toString());
-            return null;
+            return Optional.empty();
         }
 
         // extract description
@@ -81,36 +78,30 @@ public final class YoutubeRssFeedListener extends AbstractYoutubeListener<SyndEn
             description = des.get();
         }
 
-        return new YoutubeVideo(entry.getTitle(), videoId, url, publishDate, description);
+        return Optional.of(new Video(entry.getTitle(), videoId, url, publishDate, description));
     }
 
     @Synchronized
     @Override
-    public boolean update() {
+    public Optional<List<SyndEntry>> update() {
         try (XmlReader reader = new XmlReader(new URL(getFeedUrl()))) {
             val feed = new SyndFeedInput().build(reader);
             log.trace("updated feed of {}", getInstance().getChannelId());
-            setVideos(feed.getEntries().stream()
-                    .map(this::extract)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList()));
-
-            return true;
+            return Optional.of(feed.getEntries());
         } catch (FeedException e) {
             log.error("was unable to parse feed", e);
-            return false;
+            return Optional.empty();
         } catch (MalformedURLException e) {
             log.error("youtube feed URL is malformed, please check the configurations for channel-id {}",
                     getInstance().getChannelId(), e);
-            return false;
+            return Optional.empty();
         } catch (IOException e) {
             log.error("an error occurred whilst trying to read the stream of the provided youtube-feed", e);
-            return false;
+            return Optional.empty();
         }
     }
 
     private String getFeedUrl() {
         return String.format("https://www.youtube.com/feeds/videos.xml?channel_id=%s", getInstance().getChannelId());
     }
-
 }

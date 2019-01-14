@@ -1,6 +1,6 @@
 package com.fallingdutchman.youtuberedditbot.listeners.filtering;
 
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,7 +23,7 @@ public class DescriptionFilterTest {
     private static final String channelId = "foobar";
     private final String singleLineDescription;
     private VideoFilter descriptionFilter;
-    private YoutubeVideo youtubeVideo;
+    private Video video;
 
     public DescriptionFilterTest(String singleLineDescription) {
         this.singleLineDescription = singleLineDescription;
@@ -37,25 +37,25 @@ public class DescriptionFilterTest {
     @After
     public void tearDown() {
         descriptionFilter = null;
-        youtubeVideo = null;
+        video = null;
     }
 
     @Test
     public void checkEntrySingleLine() throws Exception {
         final String description = String.format("https://www.youtube.com/%s", singleLineDescription);
-        this.youtubeVideo = new YoutubeVideo("test", "test", new URL("http://www.google.com"), LocalDateTime.now(), description);
+        this.video = new Video("test", "test", new URL("http://www.google.com"), LocalDateTime.now(), description);
 
-        Assert.assertTrue("did not detect simple singleLineDescription", descriptionFilter.test(youtubeVideo));
+        Assert.assertTrue("did not detect simple singleLineDescription", descriptionFilter.test(video));
     }
 
     @Test
     public void checkEntryMultiline() throws Exception {
         final String description = String.format("test123\n\n foo https://www.youtube.com/%s bar\ntest",
                 singleLineDescription);
-        this.youtubeVideo = new YoutubeVideo("test", "test", new URL("http://www.google.com"), LocalDateTime.now(), description);
+        this.video = new Video("test", "test", new URL("http://www.google.com"), LocalDateTime.now(), description);
 
 
-        Assert.assertTrue(descriptionFilter.test(youtubeVideo));
+        Assert.assertTrue(descriptionFilter.test(video));
     }
 
     @Parameterized.Parameters(name = "{index}: {0}")

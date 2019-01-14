@@ -1,6 +1,6 @@
 package com.fallingdutchman.youtuberedditbot;
 
-import com.fallingdutchman.youtuberedditbot.model.YoutubeVideo;
+import com.fallingdutchman.youtuberedditbot.model.Video;
 import com.google.api.client.util.DateTime;
 import com.typesafe.config.Config;
 import lombok.NonNull;
@@ -32,7 +32,7 @@ public class YrbUtils {
     }
 
     @SuppressWarnings("OptionalIsPresent")
-    public Comparator<Optional<YoutubeVideo>> getOptionalVideoComparator() {
+    public Comparator<Optional<Video>> getOptionalVideoComparator() {
         return (o1, o2) -> {
             if (!o1.isPresent() && !o2.isPresent()) {
                 return 0;
@@ -48,31 +48,31 @@ public class YrbUtils {
 
     @NonNull
     public String getPathOrDefault(Config config, String path, String defaultValue) {
-        return config.hasPathOrNull(path) ? config.getString(path) : defaultValue;
+        return config.hasPath(path) ? config.getString(path) : defaultValue;
     }
 
     @NonNull
     public long getPathOrDefault(Config config, String path, long defaultValue) {
-        return config.hasPathOrNull(path) ? config.getLong(path) : defaultValue;
+        return config.hasPath(path) ? config.getLong(path) : defaultValue;
     }
 
     @NonNull
     public double getPathOrDefault(Config config, String path, double defaultValue) {
-        return config.hasPathOrNull(path) ? config.getDouble(path) : defaultValue;
+        return config.hasPath(path) ? config.getDouble(path) : defaultValue;
     }
 
     @NonNull
     public int getPathOrDefault(Config config, String path, int defaultValue) {
-        return config.hasPathOrNull(path) ? config.getInt(path) : defaultValue;
+        return config.hasPath(path) ? config.getInt(path) : defaultValue;
     }
 
     @NonNull
     public boolean getPathOrDefault(Config config, String path, boolean defaultValue) {
-        return config.hasPathOrNull(path) ? config.getBoolean(path) : defaultValue;
+        return config.hasPath(path) ? config.getBoolean(path) : defaultValue;
     }
 
     @NonNull
     public Optional<Config> getOptionalConfig(Config config, String path) {
-        return config.hasPathOrNull(path) ? Optional.of(config.getConfig(path)) : Optional.empty();
+        return config.hasPath(path) ? Optional.of(config.getConfig(path)) : Optional.empty();
     }
 }

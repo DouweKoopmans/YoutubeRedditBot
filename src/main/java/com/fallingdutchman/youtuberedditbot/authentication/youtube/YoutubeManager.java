@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.NonNull;
+import lombok.Synchronized;
 import lombok.experimental.FieldDefaults;
 
 import java.io.IOException;
@@ -38,11 +39,12 @@ public class YoutubeManager {
         }).setApplicationName(this.config.getApplicationName()).build();
     }
 
+    @Synchronized
     public YouTube getYouTube() {
         return youTube;
     }
 
-    public List<PlaylistItem> listAllVideosFromPlayList(final String playlistId,final String apiKey) throws IOException {
+    public List<PlaylistItem> getVideosFromPlaylist(final String playlistId, final String apiKey) throws IOException {
         testApiKey(apiKey);
 
         return this.getYouTube()
@@ -56,7 +58,7 @@ public class YoutubeManager {
                 .getItems();
     }
 
-    public List<Channel> listChannelsFromChannelId(final String channelId, final String apiKey) throws IOException {
+    public List<Channel> getChannelFromId(final String channelId, final String apiKey) throws IOException {
         testApiKey(apiKey);
 
         return this.getYouTube()

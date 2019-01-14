@@ -2,7 +2,7 @@ package com.fallingdutchman.youtuberedditbot.formatting;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.text.StrSubstitutor;
+import org.apache.commons.text.StringSubstitutor;
 
 import java.util.Map;
 
@@ -14,6 +14,6 @@ public class Formatter {
     private final String template;
 
     public String format(final Map<String, String> values) {
-        return new StrSubstitutor(values).replace(template);
+        return new StringSubstitutor(values).replace(template);
     }
 }

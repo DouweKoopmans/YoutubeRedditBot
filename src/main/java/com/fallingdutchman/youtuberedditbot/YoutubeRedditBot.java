@@ -1,7 +1,7 @@
 package com.fallingdutchman.youtuberedditbot;
 
-import com.fallingdutchman.youtuberedditbot.listeners.AbstractYoutubeListener;
-import com.fallingdutchman.youtuberedditbot.listeners.YoutubeListenerFactory;
+import com.fallingdutchman.youtuberedditbot.listeners.AbstractVideoListener;
+import com.fallingdutchman.youtuberedditbot.listeners.ListenerFactory;
 import com.fallingdutchman.youtuberedditbot.model.Instance;
 import com.google.api.client.util.Lists;
 import com.google.inject.Guice;
@@ -19,9 +19,9 @@ import java.util.List;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class YoutubeRedditBot {
-    final List<AbstractYoutubeListener> listeners = Lists.newArrayList();
+    final List<AbstractVideoListener> listeners = Lists.newArrayList();
     final ConfigManager configManager;
-    YoutubeListenerFactory listenerFactory;
+    ListenerFactory listenerFactory;
 
     private YoutubeRedditBot() {
         configManager = new ConfigManager();
@@ -43,21 +43,7 @@ public class YoutubeRedditBot {
         log.info("");
         val injector = Guice.createInjector(new YrbModule(configManager.getAppConfig()));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("shutting down!");
-            log.info("----------------------------------------------------");
-            log.info("there are currently {} feeds listening, feeds:", listeners.size());
-            for (int i = 0; i < listeners.size(); i++) {
-                val listener = listeners.get(i);
-
-                log.info("feed {}: ", i + 1);
-                log.info(listener.toString());
-                listener.stopListening();
-            }
-            log.info("----------------------------------------------------");
-        }));
-
-        listenerFactory = injector.getInstance(YoutubeListenerFactory.class);
+        listenerFactory = injector.getInstance(ListenerFactory.class);
 
         val instances = configManager.getInstances();
 
@@ -79,18 +65,41 @@ public class YoutubeRedditBot {
             }
 
             log.info("initialising listener for {}", instance);
-            val feedListener = createFeedListener(instance.getListenerType(), instance);
+            val feedListener = createFeedListener(instance.getType(), instance.getListenerType(), instance);
             listeners.add(feedListener);
         });
 
         // start listeners
         log.info("starting listeners");
-        listeners.forEach(AbstractYoutubeListener::listen);
+        listeners.forEach(listener -> {
+            try {
+                listener.listen();
+            } catch (Exception e) {
+                // listener couldn't be started
+            }
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("shutting down!");
+            log.info("----------------------------------------------------");
+            log.info("there are currently {} feeds listening, feeds:", listeners.size());
+            listeners.forEach(listener -> {
+                log.info(listener.toString());
+                listener.stopListening();
+            });
+            log.info("----------------------------------------------------");
+        }));
     }
 
     @NonNull
-    private AbstractYoutubeListener<?> createFeedListener(String type, Instance instance) {
-        switch (type) {
+    private AbstractVideoListener<?> createFeedListener(String type, String listenerType, Instance instance) {
+        if (type.equalsIgnoreCase("twitchCollection")) {
+            return listenerFactory.createTwitchCollections(instance);
+        } else if (type.equalsIgnoreCase("twitchVideo")) {
+            return listenerFactory.createTwitchVideos(instance);
+        }
+
+        switch (listenerType) {
             case "api":
                 return listenerFactory.createApi(instance);
             case "rss":

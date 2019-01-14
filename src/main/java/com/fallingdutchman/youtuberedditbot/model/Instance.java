@@ -3,7 +3,10 @@ package com.fallingdutchman.youtuberedditbot.model;
 import com.fallingdutchman.youtuberedditbot.YrbUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-import lombok.*;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.Value;
+import lombok.val;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -14,7 +17,7 @@ import java.util.stream.Collectors;
 public class Instance {
     boolean enabled;
     @Nullable String name;
-    @NonNull String channelId;
+    @Nullable String channelId;
     @NonNull Comment comment;
     @NonNull String pollerType;
     @NonNull RedditCredentials redditCredentials;
@@ -23,6 +26,10 @@ public class Instance {
     @Nullable Target target;
     double interval;
     @NonNull String listenerType;
+    @NonNull String type;
+    @Nullable String twitchClientId;
+    @Nullable String collectionTarget;
+    @Nullable String channelTarget;
 
     @Value
     public static class Target {
@@ -97,7 +104,7 @@ public class Instance {
     public static Instance of(Config c) {
         val enabled = c.getBoolean("enabled");
         val name = c.getString("name");
-        val channelId = c.getString("channelId");
+        val channelId = YrbUtils.getPathOrDefault(c, "channelId", null);
         val comment = Comment.of(c.getConfig("comment"));
         val pollerType = YrbUtils.getPathOrDefault(c, "pollerType", "new-video");
         val redditCredentials = RedditCredentials.of(c.getConfig("redditCredentials"));
@@ -108,9 +115,75 @@ public class Instance {
         val listenerType = YrbUtils.getPathOrDefault(c, "listenerType", "rss");
         String youtubeApiKey = YrbUtils.getPathOrDefault(c, "youtubeApiKey", null);
         val target = YrbUtils.getOptionalConfig(c, "target").map(Target::of).orElse(null);
+        val twitchClientApi = YrbUtils.getPathOrDefault(c, "twitch-client-id", null);
+        val collectionTarget = YrbUtils.getPathOrDefault(c, "collectionTarget", null);
+        val channelTarget = YrbUtils.getPathOrDefault(c, "channelTarget", null);
+        val type = YrbUtils.getPathOrDefault(c, "type", "youtube");
 
-        return new Instance(enabled, name, channelId, comment, pollerType, redditCredentials, subreddit, youtubeApiKey,
-                target, interval, listenerType);
+        val instance = new Instance(enabled, name, channelId, comment, pollerType, redditCredentials, subreddit, youtubeApiKey,
+                target, interval, listenerType, type, twitchClientApi, collectionTarget, channelTarget);
+
+        return sanityCheck(instance);
+    }
+
+    /**
+     * checks if the conditionally required parameters of instance are present.
+     * @param instance the instance which should be checked
+     * @return the instance that was referenced
+     * @throws IllegalArgumentException if a required element of the instance is missing
+     */
+    private static Instance sanityCheck(final Instance instance) {
+        if (instance.getType().equalsIgnoreCase("youtube")) {
+            if (instance.getChannelId() == null) {
+                throw new IllegalArgumentException("channelId can not be null for type \"youtube\"");
+            }
+            if (instance.getChannelId().isEmpty()) {
+                throw new IllegalArgumentException("channelId can not be empty for type \"youtube\"");
+            }
+
+            if (instance.getListenerType().equalsIgnoreCase("api")) {
+                if (instance.getYoutubeApiKey() == null) {
+                    throw new IllegalArgumentException("youtube-api-key can not be null for type \"youtube\"");
+                }
+                if (instance.getYoutubeApiKey().isEmpty()) {
+                    throw new IllegalArgumentException("youtube-api-key can not be empty for type \"youtube\"");
+                }
+            }
+
+            if (instance.getPollerType().equalsIgnoreCase("description-mention") && instance.getTarget() == null) {
+                throw new IllegalArgumentException("target can not be null for description-mention poller for type " +
+                        "\"youtube\"");
+            }
+        } else if (instance.getType().equalsIgnoreCase("twitchCollection") || instance.getType().equalsIgnoreCase("twitchVideo")) {
+            if (instance.getTwitchClientId() == null) {
+                throw new IllegalArgumentException("twitch-client-id can not be null for type \"twitch\"");
+            }
+            if (instance.getTwitchClientId().isEmpty()) {
+                throw new IllegalArgumentException("twitch-client-id can not be empty for type \"twitch\"");
+            }
+
+            if (instance.getType().equalsIgnoreCase("twitchCollection")) {
+                if (instance.getCollectionTarget() == null) {
+                    throw new IllegalArgumentException("collectionTarget can not be null for type \"twitchCollection\"");
+                }
+
+                if (instance.getCollectionTarget().isEmpty()) {
+                    throw new IllegalArgumentException("collectionTarget can not be empty for type \"twitchCollection\"");
+                }
+            } else {
+                if (instance.getChannelTarget() == null) {
+                    throw new IllegalArgumentException("channelTarget can not be null for type \"twitchVideo\"");
+                }
+
+                if (instance.getChannelTarget().isEmpty()) {
+                    throw new IllegalArgumentException("channelTarget can not be empty for type \"twitchVideo\"");
+                }
+            }
+        } else {
+            throw new IllegalArgumentException(String.format("\"%s\" is not a valid type", instance.getType()));
+        }
+
+        return instance;
     }
 }
       
