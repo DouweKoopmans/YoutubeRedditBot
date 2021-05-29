@@ -98,3 +98,5 @@ bots.conf
 log/
 private.properties
 !private.properties.example
+
+tmp.txt
